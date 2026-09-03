@@ -1,0 +1,175 @@
+{
+  "events": [
+    {
+      "id": 10,
+      "type": "Extreme Rainfall",
+      "risk": "HIGH",
+      "anomaly_score": 73.77,
+      "confidence": 87,
+      "forecast_start": 24,
+      "forecast_end": 96,
+      "movement": "EAST",
+      "speed_deg": 4.95,
+      "peak_rainfall": 140.76,
+      "affected_area_km2": 18420,
+      "impact": ["Flooding", "Landslides", "Transport disruption"],
+      "start": {"lat": 22.5, "lon": 89.5},
+      "latest": {"lat": 26.0, "lon": 93.0},
+      "trajectory": [
+        {"hour": 24, "lat": 22.5, "lon": 89.5, "rainfall": 118.4, "score": 61.2},
+        {"hour": 48, "lat": 23.6, "lon": 90.8, "rainfall": 129.7, "score": 66.8},
+        {"hour": 72, "lat": 24.7, "lon": 91.9, "rainfall": 136.2, "score": 70.5},
+        {"hour": 96, "lat": 26.0, "lon": 93.0, "rainfall": 140.76, "score": 73.77}
+      ],
+      "interpretation": "Extreme rainfall anomaly detected. The system identifies a persistent high-rainfall region and tracks its eastward movement across forecast periods.",
+      "why": [
+        "Rainfall is substantially above the local climatological baseline.",
+        "The anomaly persists across consecutive forecast periods.",
+        "The high-intensity region moves coherently instead of appearing as an isolated grid spike.",
+        "Multiple forecast variables support elevated risk."
+      ]
+    },
+    {
+      "id": 11,
+      "type": "Heat Anomaly",
+      "risk": "SEVERE",
+      "anomaly_score": 82.4,
+      "confidence": 91,
+      "forecast_start": 24,
+      "forecast_end": 96,
+      "movement": "NORTH-EAST",
+      "speed_deg": 2.8,
+      "peak_rainfall": 4.1,
+      "affected_area_km2": 27600,
+      "impact": ["Heat stress", "Water demand", "Power demand"],
+      "start": {"lat": 24.0, "lon": 77.0},
+      "latest": {"lat": 27.2, "lon": 80.1},
+      "trajectory": [
+        {"hour": 24, "lat": 24.0, "lon": 77.0, "rainfall": 2.0, "score": 70.0},
+        {"hour": 48, "lat": 25.0, "lon": 78.0, "rainfall": 2.7, "score": 75.2},
+        {"hour": 72, "lat": 26.1, "lon": 79.1, "rainfall": 3.2, "score": 79.0},
+        {"hour": 96, "lat": 27.2, "lon": 80.1, "rainfall": 4.1, "score": 82.4}
+      ],
+      "interpretation": "Persistent high-temperature anomaly detected with a coherent north-eastward footprint.",
+      "why": [
+        "Forecast temperature exceeds the historical baseline.",
+        "The anomaly persists for multiple forecast horizons.",
+        "The affected footprint expands as the event evolves."
+      ]
+    },
+    {
+      "id": 12,
+      "type": "Extreme Wind",
+      "risk": "MODERATE",
+      "anomaly_score": 48.6,
+      "confidence": 79,
+      "forecast_start": 24,
+      "forecast_end": 96,
+      "movement": "WEST",
+      "speed_deg": 3.2,
+      "peak_rainfall": 32.8,
+      "affected_area_km2": 9400,
+      "impact": ["Strong winds", "Marine disruption"],
+      "start": {"lat": 15.0, "lon": 82.0},
+      "latest": {"lat": 15.4, "lon": 78.8},
+      "trajectory": [
+        {"hour": 24, "lat": 15.0, "lon": 82.0, "rainfall": 21.2, "score": 39.0},
+        {"hour": 48, "lat": 15.1, "lon": 80.9, "rainfall": 25.7, "score": 42.3},
+        {"hour": 72, "lat": 15.2, "lon": 79.8, "rainfall": 29.4, "score": 45.1},
+        {"hour": 96, "lat": 15.4, "lon": 78.8, "rainfall": 32.8, "score": 48.6}
+      ],
+      "interpretation": "Elevated wind anomaly detected with a westward-moving footprint.",
+      "why": [
+        "Wind speed is above the expected local range.",
+        "The signal persists across several forecast horizons."
+      ]
+    },
+    {
+      "id": 13,
+      "type": "Cyclone Wind Anomaly",
+      "risk": "SEVERE",
+      "severity": "SEVERE",
+      "anomaly_score": 88.2,
+      "confidence": 84,
+      "forecast_start": 24,
+      "forecast_end": 96,
+      "movement": "NORTH-WEST",
+      "speed_deg": 3.9,
+      "wind_anomaly": 58,
+      "affected_area_km2": 31200,
+      "impact": ["Coastal wind damage", "Storm surge", "Power disruption"],
+      "start": {"lat": 13.2, "lon": 88.4},
+      "latest": {"lat": 17.4, "lon": 84.1},
+      "trajectory": [
+        {"hour": 24, "lat": 13.2, "lon": 88.4, "wind_anomaly": 42, "score": 72.4},
+        {"hour": 48, "lat": 14.6, "lon": 87.0, "wind_anomaly": 49, "score": 78.8},
+        {"hour": 72, "lat": 16.0, "lon": 85.5, "wind_anomaly": 55, "score": 84.1},
+        {"hour": 96, "lat": 17.4, "lon": 84.1, "wind_anomaly": 58, "score": 88.2}
+      ],
+      "interpretation": "Cyclone-strength wind anomaly detected with a north-westward moving core and elevated coastal exposure.",
+      "why": [
+        "Wind anomaly is substantially above the expected regional range.",
+        "The circulation pattern remains coherent across forecast periods.",
+        "The projected path intersects a densely exposed coastal corridor."
+      ]
+    },
+    {
+      "id": 14,
+      "type": "Flash Flood Anomaly",
+      "risk": "HIGH",
+      "severity": "HIGH",
+      "anomaly_score": 67.5,
+      "confidence": 81,
+      "forecast_start": 24,
+      "forecast_end": 72,
+      "movement": "SOUTH-EAST",
+      "speed_deg": 2.1,
+      "rainfall_anomaly": 142,
+      "peak_rainfall": 186.4,
+      "affected_area_km2": 11800,
+      "impact": ["Flash flooding", "Road closures", "River overflow"],
+      "start": {"lat": 26.8, "lon": 80.2},
+      "latest": {"lat": 24.9, "lon": 82.8},
+      "trajectory": [
+        {"hour": 24, "lat": 26.8, "lon": 80.2, "rainfall": 142.5, "score": 52.2},
+        {"hour": 48, "lat": 25.8, "lon": 81.5, "rainfall": 169.2, "score": 61.4},
+        {"hour": 72, "lat": 24.9, "lon": 82.8, "rainfall": 186.4, "score": 67.5}
+      ],
+      "interpretation": "Heavy rainfall anomaly is concentrating along a south-eastward corridor with rapid runoff and flash-flood potential.",
+      "why": [
+        "Accumulated rainfall is well above the local forecast baseline.",
+        "The signal strengthens over consecutive forecast periods.",
+        "The affected corridor overlaps drainage and transport-sensitive areas."
+      ]
+    },
+    {
+      "id": 15,
+      "type": "Cold Anomaly",
+      "risk": "MODERATE",
+      "severity": "MODERATE",
+      "anomaly_score": 43.7,
+      "confidence": 76,
+      "forecast_start": 24,
+      "forecast_end": 96,
+      "movement": "SOUTH",
+      "speed_deg": 1.7,
+      "temperature_anomaly": -6.4,
+      "affected_area_km2": 8600,
+      "impact": ["Cold stress", "Crop exposure", "Visibility reduction"],
+      "start": {"lat": 30.1, "lon": 77.4},
+      "latest": {"lat": 27.8, "lon": 77.9},
+      "trajectory": [
+        {"hour": 24, "lat": 30.1, "lon": 77.4, "temperature_anomaly": -4.1, "score": 35.2},
+        {"hour": 48, "lat": 29.3, "lon": 77.6, "temperature_anomaly": -5.0, "score": 38.7},
+        {"hour": 72, "lat": 28.5, "lon": 77.8, "temperature_anomaly": -5.9, "score": 41.2},
+        {"hour": 96, "lat": 27.8, "lon": 77.9, "temperature_anomaly": -6.4, "score": 43.7}
+      ],
+      "interpretation": "A moderate cold-temperature anomaly is moving southward with a persistent below-baseline signal.",
+      "why": [
+        "Forecast temperatures remain below the expected seasonal range.",
+        "The anomaly maintains a consistent southward movement.",
+        "Confidence is moderate and should be monitored as the forecast evolves."
+      ]
+    }
+  ]
+}

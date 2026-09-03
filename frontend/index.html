@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Weather Anomaly Intelligence | SIH26078</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">AI WEATHER INTELLIGENCE</div>
+    <div class="sub">SIH26078 · Spatio-Temporal Extreme Weather Anomaly Tracking</div>
+  </div>
+  <div id="apiStatus" class="status">● CONNECTING</div>
+</header>
+
+<main>
+  <section class="toolbar">
+    <div>
+      <label>Forecast horizon</label>
+      <select id="horizon">
+        <option value="24">+24 HOURS</option>
+        <option value="48">+48 HOURS</option>
+        <option value="72">+72 HOURS</option>
+        <option value="96" selected>+96 HOURS</option>
+      </select>
+    </div>
+    <div>
+      <label>Weather event</label>
+      <select id="eventSelect"></select>
+    </div>
+    <button id="trackBtn">TRACK WEATHER EVENT</button>
+    <button id="alertBtn" class="secondary">GENERATE 5 KM ALERT</button>
+  </section>
+
+  <div class="demoBanner"><span id="dataModeBadge">LIVE DATA</span><b id="dataModeText">Real forecast data with statistical anomaly detection</b><small id="lastUpdate">Updated: N/A</small></div>
+
+  <section class="grid">
+    <div class="mapCard">
+      <div id="map"></div>
+      <div class="legend">
+        <span><i class="dot severe"></i> Severe</span>
+        <span><i class="dot high"></i> High</span>
+        <span><i class="dot moderate"></i> Moderate</span>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <div class="eyebrow">ACTIVE ANOMALIES</div>
+        <div class="activeSummary"><b id="totalCount">0</b><span>DETECTED EVENTS</span></div>
+        <div class="riskGrid">
+          <div><b id="severeCount">0</b><span>SEVERE</span></div>
+          <div><b id="highCount">0</b><span>HIGH</span></div>
+          <div><b id="moderateCount">0</b><span>MODERATE</span></div>
+        </div>
+      </div>
+
+      <div class="card systemCard">
+        <div class="eyebrow">SYSTEM STATUS</div>
+        <div class="systemRows">
+          <div><span>API</span><b id="systemApi">CONNECTING</b></div>
+          <div><span>DATA</span><b id="systemData">LOADING</b></div>
+          <div><span>EVENTS</span><b id="systemEvents">0</b></div>
+          <div><span>MODEL</span><b id="systemModel">READY</b></div>
+          <div><span>MAP</span><b id="systemMap">OFFLINE</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row"><span>SELECTED EVENT</span><b id="riskBadge">HIGH RISK</b></div>
+        <h2 id="eventTitle">EVENT #10</h2>
+        <div class="facts">
+          <div><span>TYPE</span><b id="eventType"></b></div>
+          <div><span>FORECAST</span><b id="forecast"></b></div>
+          <div><span>START</span><b id="start"></b></div>
+          <div><span>LATEST</span><b id="latest"></b></div>
+          <div><span>MOVEMENT</span><b id="movement"></b></div>
+          <div><span>PEAK RAINFALL</span><b id="rainfall"></b></div>
+          <div><span>MAX TEMP ANOMALY</span><b id="temperatureAnomaly"></b></div>
+          <div><span>MAX WIND ANOMALY</span><b id="windAnomaly"></b></div>
+          <div class="score"><span>AI ANOMALY SCORE</span><b id="score"></b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">PROTOTYPE AI INTERPRETATION</div>
+        <p id="interpretation"></p>
+        <div class="confidence"><span>DETECTION CONFIDENCE</span><b id="confidenceText"></b></div>
+        <div class="bar"><i id="confidenceBar"></i></div>
+      </div>
+
+      <div class="card evidenceCard">
+        <div class="eyebrow">ANOMALY EVIDENCE</div>
+        <div class="evidenceGrid">
+          <div><span>PRIMARY SIGNAL</span><b id="evidenceSignal"></b></div>
+          <div><span>OBSERVED VALUE</span><b id="evidenceValue"></b></div>
+          <div><span>PERSISTENCE</span><b id="evidencePersistence"></b></div>
+          <div><span>SPATIAL COVERAGE</span><b id="evidenceCoverage"></b></div>
+          <div><span>MOVEMENT</span><b id="evidenceMovement"></b></div>
+          <div><span>ANOMALY SCORE</span><b id="evidenceScore"></b></div>
+          <div><span>DETECTION CONFIDENCE</span><b id="evidenceConfidence"></b></div>
+        </div>
+        <div class="baseline" id="baselineText">Baseline: statistical reference</div>
+        <p id="evidenceExplanation" class="evidenceExplanation"></p>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">IMPACT ASSESSMENT</div>
+        <div class="impact">
+          <div><span>AFFECTED AREA</span><b id="area"></b></div>
+          <div><span>RISK</span><b id="impactRisk"></b></div>
+        </div>
+        <div id="impactTags" class="tags"></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="lower">
+    <div class="card">
+      <div class="sectionTitle">FORECAST EVOLUTION</div>
+      <div id="timeline" class="timeline"></div>
+    </div>
+    <div class="card">
+      <div class="sectionTitle">WHY IS THIS ANOMALOUS?</div>
+      <ul id="whyList"></ul>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+  <section id="alertPanel" class="alertPanel" hidden>
+    <div class="alertHeader"><div><div class="eyebrow">ACTIONABLE WARNING</div><h2>5 KM ALERT GENERATED</h2></div><button id="closeAlertBtn" class="iconButton" aria-label="Close alert">×</button></div>
+    <div class="alertDetails">
+      <div><span>ALERT ID</span><b id="alertId"></b></div>
+      <div><span>EVENT</span><b id="alertEvent"></b></div>
+      <div><span>SEVERITY</span><b id="alertSeverity"></b></div>
+      <div><span>RADIUS</span><b id="alertRadius">5 km</b></div>
+      <div><span>CURRENT POSITION</span><b id="alertPosition"></b></div>
+      <div><span>TIMESTAMP</span><b id="alertTimestamp"></b></div>
+      <div class="alertAction"><span>RECOMMENDED ACTION</span><b id="alertAction"></b></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
