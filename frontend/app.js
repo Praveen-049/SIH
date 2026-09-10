@@ -25,10 +25,15 @@ const formatNumber = (value, suffix = "") => {
 
 function setApiStatus(online, message = "") {
     const status = byId("apiStatus");
-    status.textContent = online ? "● API ONLINE" : "● API OFFLINE";
-    status.style.color = online ? "#55e0a0" : "#ff718b";
-    byId("systemApi").textContent = online ? "ONLINE" : "OFFLINE";
-    byId("systemApi").classList.toggle("offline", !online);
+    if (status) {
+        status.textContent = online ? "● API ONLINE" : "● API OFFLINE";
+        status.style.color = online ? "#55e0a0" : "#ff718b";
+    }
+    const systemApi = byId("systemApi");
+    if (systemApi) {
+        systemApi.textContent = online ? "ONLINE" : "OFFLINE";
+        systemApi.classList.toggle("offline", !online);
+    }
     if (message) showToast(message);
 }
 
