@@ -24,6 +24,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertFalse(required - ids, f"Missing analysis IDs: {sorted(required - ids)}")
         self.assertIn("/analysis", APP_JS)
         self.assertIn("analyzeEvent", APP_JS)
+        self.assertIn('byId("locationSearchBtn").addEventListener("click", loadLocationIntelligence)', APP_JS)
 
 
 if __name__ == "__main__":

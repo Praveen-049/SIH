@@ -495,7 +495,7 @@ function initialize() {
     byId("judgeNextBtn").addEventListener("click", () => { judgeStep = (judgeStep + 1) % 6; updateJudgeStep(); });
     byId("judgeResetBtn").addEventListener("click", () => { judgeStep = 0; setPlaybackHour(0); byId("alertPanel").hidden = true; updateJudgeStep(); });
     byId("responseAlertBtn").addEventListener("click", createAlert);
-    byId("locationSearchBtn").addEventListener("click", analyzeLocation);
+    byId("locationSearchBtn").addEventListener("click", loadLocationIntelligence);
     byId("locationEventBtn").addEventListener("click", createLocationEvent);
     byId("locationImpactBtn").addEventListener("click", () => { byId("locationImpact").scrollIntoView({ behavior: "smooth", block: "center" }); });
     [["chartCompositeBtn", "composite"], ["chartTemperatureBtn", "temperature"], ["chartRainfallBtn", "rainfall"], ["chartWindBtn", "wind"]].forEach(([id, mode]) => byId(id).addEventListener("click", () => { chartMode = mode; document.querySelectorAll(".chartSwitch button").forEach((button) => button.classList.remove("active")); byId(id).classList.add("active"); if (selectedEvent) renderEventChart(selectedEvent); else if (locationIntelligence) renderTrendChart((locationIntelligence.forecast || []).slice(0, 5).map((item) => mode === "composite" ? Number(item.composite_sigma || 0) : Number(item[`${mode}_z`] || 0)), (locationIntelligence.forecast || []).slice(0, 5).map((item) => `+${item.hour || 0}H`)); }));
