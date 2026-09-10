@@ -1,4 +1,5 @@
-let API_BASE = window.API_BASE_OVERRIDE || "http://127.0.0.1:8001";
+const isHosted = window.location.protocol === "https:" && !/^(localhost|127\\.0\\.0\\.1)$/.test(window.location.hostname);
+let API_BASE = window.API_BASE_OVERRIDE || (isHosted ? window.location.origin : "http://127.0.0.1:8001");
 let events = [];
 let selectedEvent = null;
 let currentMode = "LIVE";
