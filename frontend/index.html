@@ -6,6 +6,8 @@
 <title>AI Weather Intelligence | Extreme Weather Monitoring</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="command-center.css">
+<link rel="stylesheet" href="depth-effects.css">
 </head>
 <body>
 <header class="commandHeader">
@@ -22,6 +24,7 @@
     <div class="commandLabel"><span class="eyebrow">AUTOMATIC ANOMALY DETECTION</span><b>Forecast anomalies are displayed directly on the map.</b></div>
     <div class="anomalyCommandStatus"><span class="liveMark">●</span><span id="anomalyMapStatus" role="status">LOADING ANOMALY FIELD...</span></div>
     <span class="locationStatus">Select a map signal or monitored event for details.</span>
+    <nav class="workflowRail" aria-label="Weather intelligence workflow"><span class="workflowNode active">01 <b>DETECT</b></span><span class="workflowNode">02 <b>TRACK</b></span><span class="workflowNode">03 <b>PREDICT</b></span><span class="workflowNode">04 <b>EXPLAIN</b></span><span class="workflowNode">05 <b>LOCALIZE</b></span><span class="workflowNode">06 <b>ALERT</b></span></nav>
   </section>
 
   <section class="locationInputWrap" aria-label="Location forecast analysis"><label for="locationQuery">LOCATION</label><input id="locationQuery" type="search" placeholder="Chennai, Delhi, Mumbai or 13.08,80.27"><button id="locationSearchBtn" class="secondary">ANALYZE LOCATION</button><span id="locationStatus" role="status">READY FOR LOCATION ANALYSIS</span></section>
@@ -34,7 +37,7 @@
   <section class="workspaceGrid">
     <section class="mapPanel panel">
       <div class="panelTopline"><div><span class="eyebrow">GEOSPATIAL RISK FIELD</span><b>Forecast anomaly map</b></div><div class="mapReadout"><span>FORECAST <b id="mapForecast">+96H</b></span><span>EVENT <b id="mapEvent">N/A</b></span></div></div>
-      <div class="mapFrame"><div id="map"></div><div class="mapLegend"><span class="legendTitle">RISK LEVEL</span><span><i class="dot normal"></i>NORMAL</span><span><i class="dot moderate"></i>MODERATE</span><span><i class="dot high"></i>HIGH</span><span><i class="dot severe"></i>SEVERE</span></div></div>
+      <div class="mapFrame"><div id="map"></div><canvas id="atmosphericCanvas" aria-hidden="true"></canvas><div class="mapTelemetry"><span><i class="telemetryPulse"></i> FIELD SCAN</span><b id="mapScanReadout">ACTIVE</b><span>RADAR <b>360°</b></span></div><div class="mapLegend"><span class="legendTitle">RISK LEVEL</span><span><i class="dot normal"></i>NORMAL</span><span><i class="dot moderate"></i>MODERATE</span><span><i class="dot high"></i>HIGH</span><span><i class="dot severe"></i>SEVERE</span></div></div>
     </section>
 
     <aside class="intelligenceRail">

@@ -17,6 +17,10 @@ let playbackTimer;
 let judgeStep = 0;
 let chartMode = "composite";
 let locationLoadingTimer;
+let atmosphericFrame;
+let atmosphericParticles = [];
+let atmosphericCanvas;
+let atmosphericContext;
 
 const byId = (id) => document.getElementById(id);
 const safeValue = (value, fallback = "N/A") => {
@@ -29,6 +33,43 @@ const formatNumber = (value, suffix = "") => {
     return `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}${suffix}`;
 };
 const severityColor = (score) => Number(score) >= 80 ? "#ff315a" : Number(score) >= 60 ? "#ff8a21" : Number(score) >= 40 ? "#ffd33d" : "#55e0a0";
+
+function initializeAtmosphere() {
+    atmosphericCanvas = byId("atmosphericCanvas");
+    if (!atmosphericCanvas) return;
+    atmosphericContext = atmosphericCanvas.getContext("2d");
+    const particleCount = Math.min(150, Math.max(70, Math.floor(window.innerWidth / 11)));
+    atmosphericParticles = Array.from({ length: particleCount }, (_, index) => ({ x: (index * 47) % 1000, y: (index * 83) % 700, speed: 0.12 + (index % 5) * 0.035, size: 0.7 + (index % 3) * 0.45, phase: index * 0.7 }));
+    const resize = () => { const scale = window.devicePixelRatio || 1; atmosphericCanvas.width = atmosphericCanvas.clientWidth * scale; atmosphericCanvas.height = atmosphericCanvas.clientHeight * scale; atmosphericContext.setTransform(scale, 0, 0, scale, 0, 0); };
+    resize();
+    window.addEventListener("resize", resize, { passive: true });
+    const render = (time) => {
+        const width = atmosphericCanvas.clientWidth; const height = atmosphericCanvas.clientHeight; atmosphericContext.clearRect(0, 0, width, height);
+        const score = Number(selectedEvent?.anomaly_score) || 0; const intensity = Math.min(1, Math.max(.2, score / 100));
+        if (selectedEvent?.latest && Number.isFinite(Number(selectedEvent.latest.lat))) {
+            const centerX = width * (.5 + Math.sin(time / 9000) * .08); const centerY = height * (.48 + Math.cos(time / 11000) * .06);
+            const glow = atmosphericContext.createRadialGradient(centerX, centerY, 8, centerX, centerY, 170 + intensity * 120); glow.addColorStop(0, `rgba(255, 116, 57, ${.16 * intensity})`); glow.addColorStop(.55, `rgba(87, 184, 255, ${.08 * intensity})`); glow.addColorStop(1, "rgba(0, 0, 0, 0)"); atmosphericContext.fillStyle = glow; atmosphericContext.fillRect(0, 0, width, height);
+            atmosphericContext.beginPath(); atmosphericContext.arc(centerX, centerY, 12 + intensity * 9 + Math.sin(time / 300) * 3, 0, Math.PI * 2); atmosphericContext.strokeStyle = `rgba(255, 174, 92, ${.55 * intensity})`; atmosphericContext.lineWidth = 1.5; atmosphericContext.stroke();
+        }
+        atmosphericParticles.forEach((particle) => { particle.y -= particle.speed * (1 + intensity * .7); particle.x += Math.sin(time / 1800 + particle.phase) * .18; if (particle.y < -8) particle.y = height + 8; if (particle.x > width + 8) particle.x = -8; if (particle.x < -8) particle.x = width + 8; atmosphericContext.strokeStyle = `rgba(134, 214, 255, ${.22 + intensity * .24})`; atmosphericContext.lineWidth = particle.size; atmosphericContext.beginPath(); atmosphericContext.moveTo(particle.x % width, particle.y); atmosphericContext.lineTo((particle.x - 2) % width, particle.y + 8 + intensity * 8); atmosphericContext.stroke(); });
+        atmosphericFrame = window.requestAnimationFrame(render);
+    };
+    atmosphericFrame = window.requestAnimationFrame(render);
+}
+
+function initializeParallax() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const surfaces = document.querySelectorAll(".mapPanel, .intelligenceRail .panel, .locationInputWrap, .anomalyCommand");
+    window.addEventListener("pointermove", (event) => {
+        const x = (event.clientX / window.innerWidth - .5) * 2;
+        const y = (event.clientY / window.innerHeight - .5) * 2;
+        surfaces.forEach((surface, index) => {
+            const depth = index === 0 ? .22 : .1;
+            surface.style.setProperty("--parallax-x", `${(x * depth).toFixed(2)}deg`);
+            surface.style.setProperty("--parallax-y", `${(-y * depth).toFixed(2)}deg`);
+        });
+    }, { passive: true });
+}
 
 function setApiStatus(online, message = "") {
     const status = byId("apiStatus");
@@ -318,6 +359,7 @@ function selectEvent(id) {
     renderSelectedEvent();
     renderTimeline();
     if (selectedEvent) drawTrajectory(getVisibleTrajectory());
+    document.querySelectorAll(".workflowNode").forEach((node, index) => node.classList.toggle("active", index === 0));
 }
 
 function getVisibleTrajectory(event = selectedEvent) {
@@ -484,6 +526,8 @@ async function loadEvents() {
 }
 
 function initialize() {
+    initializeAtmosphere();
+    initializeParallax();
     if (window.L) { map = L.map("map").setView([23.5, 82.5], 5); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap contributors" }).addTo(map); eventLayer = L.layerGroup().addTo(map); trajectoryLayer = L.layerGroup().addTo(map); selectedLayer = L.layerGroup().addTo(map); alertLayer = L.layerGroup().addTo(map); locationLayer = L.layerGroup().addTo(map); fieldLayers = { composite: L.layerGroup().addTo(map), temperature: L.layerGroup(), rainfall: L.layerGroup(), wind: L.layerGroup(), persistence: L.layerGroup() }; L.control.layers({}, { "Composite Risk": fieldLayers.composite, "Temperature Anomaly": fieldLayers.temperature, "Rainfall Anomaly": fieldLayers.rainfall, "Wind Anomaly": fieldLayers.wind, "Persistence": fieldLayers.persistence, "Uncertainty Corridor": selectedLayer, "Event Trajectory": trajectoryLayer, "5 km Impact Zone": alertLayer, "Location Intelligence": locationLayer }, { collapsed: false }).addTo(map); byId("systemMap").textContent = "READY"; }
     else { byId("systemMap").textContent = "OFFLINE"; byId("systemMap").classList.add("offline"); }
     byId("eventSelect").addEventListener("change", (event) => selectEvent(event.target.value));
