@@ -37,9 +37,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 from pydantic import BaseModel, Field
 
-from scientific.anomaly_engine import AnomalyEngine
-from scientific.climatology_engine import ClimatologyEngine
-from scientific.data_provider import (
+from backend.scientific.anomaly_engine import AnomalyEngine
+from backend.scientific.climatology_engine import ClimatologyEngine
+from backend.scientific.data_provider import (
     ERA5Provider,
     IMDAAProvider,
     NCUMProvider,
@@ -48,27 +48,27 @@ from scientific.data_provider import (
     StandardizedDataset,
     SyntheticProvider,
 )
-from scientific.data_validator import DataValidator
-from scientific.diffusion_downscaling import (
+from backend.scientific.data_validator import DataValidator
+from backend.scientific.diffusion_downscaling import (
     ConditionalWeatherDiffusion,
     compare_downscaling_methods,
 )
-from scientific.efi_engine import EFIEngine
-from scientific.historical_validation import (
+from backend.scientific.efi_engine import EFIEngine
+from backend.scientific.historical_validation import (
     HistoricalValidationFramework,
     ModelRegistry,
 )
-from scientific.impact_engine import (
+from backend.scientific.impact_engine import (
     AuthoritativeSeverityEngine,
     ImpactZoneEngine,
 )
-from scientific.object_tracker import (
+from backend.scientific.object_tracker import (
     TrackedEvent,
     WeatherObjectTracker,
     geodesic_distance_km,
     initial_bearing_deg,
 )
-from scientific.spatial_extraction import SpatialAnomalyExtractor, WeatherObject
+from backend.scientific.spatial_extraction import SpatialAnomalyExtractor, WeatherObject
 
 BASE = Path(__file__).resolve().parent
 DATA = json.loads((BASE / "events.json").read_text(encoding="utf-8"))
