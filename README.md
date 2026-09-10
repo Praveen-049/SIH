@@ -7,8 +7,8 @@
 3. Geographic anomaly locations on an interactive map.
 4. Spatio-temporal tracking from +24h to +96h.
 5. Event trajectory and forecast evolution.
-6. AI anomaly score and confidence.
-7. Explainable AI interpretation.
+6. Statistical anomaly score and heuristic evidence score.
+7. Explainable statistical interpretation.
 8. Impact assessment.
 9. 5 km alert generation through a REST API.
 
@@ -87,3 +87,32 @@ Interactive geospatial dashboard
 5 km alert API
 
 The intended research architecture can later replace the statistical model with the proposed GNN, diffusion, or physics-informed approach. This prototype keeps that replacement behind the `AnomalyModel` interface.
+
+## Scientific scope and limitations
+
+This repository is a technically honest prototype, not an implementation of the complete SIH research architecture.
+
+| Capability | Status |
+| --- | --- |
+| Open-Meteo surface point forecast ingestion | Implemented |
+| Hourly unit and array validation | Implemented |
+| Statistical reference-threshold score | Implemented prototype |
+| Historical climatology or 30-year baseline | Not implemented |
+| NEPS-G, NCUM, ERA5, or IMDAA ingestion | Not implemented |
+| EPS ensemble members and spread | Not implemented |
+| EFI | Not implemented |
+| Spatial anomaly fields and object tracking | Not implemented |
+| Icosahedral mesh or spherical GNN | Planned, not implemented |
+| Diffusion downscaling from 12 km to 5 km | Planned, not implemented |
+| Physics-informed loss or constraints | Planned, not implemented |
+| Historical-event validation and skill scores | Not implemented |
+
+Live trajectories are endpoint-interpolation visualizations between configured region coordinates. Demo trajectories in `backend/events.json` are manually authored and are marked by the API as `demo_simulated`. The displayed evidence score is a deterministic heuristic based on completeness, persistence, and score magnitude; it is not probabilistic confidence or ensemble uncertainty.
+
+The alert feature generates a REST response and displays a 5 km radius around the selected point. It is not a 5 km-resolution impact model, does not calculate an affected-area field, and does not send an external warning. Live precipitation is interpreted using the provider's hourly accumulation and the API exposes the returned units and one-hour temporal resolution.
+
+Run the focused scientific contract checks with:
+
+```powershell
+py -m unittest backend.test_scientific_contract
+```

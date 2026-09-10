@@ -10,7 +10,7 @@
 <body>
 <header>
   <div>
-    <div class="brand">AI WEATHER INTELLIGENCE</div>
+      <div class="brand">WEATHER ANOMALY INTELLIGENCE</div>
     <div class="sub">SIH26078 · Spatio-Temporal Extreme Weather Anomaly Tracking</div>
   </div>
   <div id="apiStatus" class="status">● CONNECTING</div>
@@ -31,11 +31,11 @@
       <label>Weather event</label>
       <select id="eventSelect"></select>
     </div>
-    <button id="trackBtn">TRACK WEATHER EVENT</button>
-    <button id="alertBtn" class="secondary">GENERATE 5 KM ALERT</button>
+    <button id="trackBtn">SHOW FORECAST PATH</button>
+      <button id="alertBtn" class="secondary">GENERATE 5 KM ALERT RADIUS</button>
   </section>
 
-  <div class="demoBanner"><span id="dataModeBadge">LIVE DATA</span><b id="dataModeText">Real forecast data with statistical anomaly detection</b><small id="lastUpdate">Updated: N/A</small></div>
+  <div class="demoBanner"><span id="dataModeBadge">LIVE DATA</span><b id="dataModeText">Open-Meteo point forecast with statistical anomaly detection</b><small id="lastUpdate">Updated: N/A</small></div>
 
   <section class="grid">
     <div class="mapCard">
@@ -77,18 +77,19 @@
           <div><span>FORECAST</span><b id="forecast"></b></div>
           <div><span>START</span><b id="start"></b></div>
           <div><span>LATEST</span><b id="latest"></b></div>
-          <div><span>MOVEMENT</span><b id="movement"></b></div>
+          <div><span>PATH DIRECTION</span><b id="movement"></b></div>
+          <div><span>PATH SPEED</span><b id="speed"></b></div>
           <div><span>PEAK RAINFALL</span><b id="rainfall"></b></div>
           <div><span>MAX TEMP ANOMALY</span><b id="temperatureAnomaly"></b></div>
           <div><span>MAX WIND ANOMALY</span><b id="windAnomaly"></b></div>
-          <div class="score"><span>AI ANOMALY SCORE</span><b id="score"></b></div>
+          <div class="score"><span>STATISTICAL ANOMALY SCORE</span><b id="score"></b></div>
         </div>
       </div>
 
       <div class="card">
-        <div class="eyebrow">PROTOTYPE AI INTERPRETATION</div>
+        <div class="eyebrow">STATISTICAL INTERPRETATION</div>
         <p id="interpretation"></p>
-        <div class="confidence"><span>DETECTION CONFIDENCE</span><b id="confidenceText"></b></div>
+        <div class="confidence"><span>HEURISTIC EVIDENCE SCORE</span><b id="confidenceText"></b></div>
         <div class="bar"><i id="confidenceBar"></i></div>
       </div>
 
@@ -101,7 +102,7 @@
           <div><span>SPATIAL COVERAGE</span><b id="evidenceCoverage"></b></div>
           <div><span>MOVEMENT</span><b id="evidenceMovement"></b></div>
           <div><span>ANOMALY SCORE</span><b id="evidenceScore"></b></div>
-          <div><span>DETECTION CONFIDENCE</span><b id="evidenceConfidence"></b></div>
+          <div><span>HEURISTIC EVIDENCE SCORE</span><b id="evidenceConfidence"></b></div>
         </div>
         <div class="baseline" id="baselineText">Baseline: statistical reference</div>
         <p id="evidenceExplanation" class="evidenceExplanation"></p>
@@ -131,7 +132,7 @@
 
   <div id="toast" class="toast"></div>
   <section id="alertPanel" class="alertPanel" hidden>
-    <div class="alertHeader"><div><div class="eyebrow">ACTIONABLE WARNING</div><h2>5 KM ALERT GENERATED</h2></div><button id="closeAlertBtn" class="iconButton" aria-label="Close alert">×</button></div>
+    <div class="alertHeader"><div><div class="eyebrow">ALERT-RADIUS VISUALIZATION</div><h2>5 KM ALERT RADIUS GENERATED</h2></div><button id="closeAlertBtn" class="iconButton" aria-label="Close alert">×</button></div>
     <div class="alertDetails">
       <div><span>ALERT ID</span><b id="alertId"></b></div>
       <div><span>EVENT</span><b id="alertEvent"></b></div>

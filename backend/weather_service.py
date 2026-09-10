@@ -14,6 +14,14 @@ OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 CACHE_TTL_SECONDS = 900
 
 _cache: dict[str, tuple[float, dict[str, Any]]] = {}
+EXPECTED_HOURLY_UNITS = {
+    "temperature_2m": "°C",
+    "precipitation": "mm",
+    "wind_speed_10m": "km/h",
+    "wind_direction_10m": "°",
+    "surface_pressure": "hPa",
+    "relative_humidity_2m": "%",
+}
 
 
 class WeatherDataError(RuntimeError):
@@ -38,7 +46,22 @@ def _request_json(url: str) -> dict[str, Any]:
         raise WeatherDataError(f"Weather provider unavailable: {error}") from error
     if not isinstance(payload, dict) or payload.get("error"):
         raise WeatherDataError(str(payload.get("reason", "Weather provider returned an invalid response")))
+    _validate_payload(payload)
     return payload
+
+
+def _validate_payload(payload: dict[str, Any]) -> None:
+    hourly = payload.get("hourly")
+    if not isinstance(hourly, dict) or not isinstance(hourly.get("time"), list):
+        raise WeatherDataError("Weather provider response is missing hourly time data")
+    times = hourly["time"]
+    units = payload.get("hourly_units", {})
+    for variable, expected_unit in EXPECTED_HOURLY_UNITS.items():
+        if variable in units and units[variable] != expected_unit:
+            raise WeatherDataError(f"Unexpected unit for {variable}: {units[variable]}")
+        values = hourly.get(variable)
+        if values is not None and (not isinstance(values, list) or len(values) != len(times)):
+            raise WeatherDataError(f"Hourly data length mismatch for {variable}")
 
 
 def get_forecast(latitude: float, longitude: float, forecast_days: int = 7) -> tuple[dict[str, Any], str, str]:

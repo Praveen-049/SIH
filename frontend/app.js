@@ -113,13 +113,13 @@ function renderEvidence(event) {
         return;
     }
     const type = safeValue(event.type, "Weather").toString().toLowerCase();
-    const signal = type.includes("heat") ? "high-temperature" : type.includes("cold") ? "below-baseline temperature" : type.includes("rain") || type.includes("flood") ? "high-rainfall" : type.includes("wind") || type.includes("cyclone") ? "high-wind" : "extreme-weather";
+    const signal = type.includes("heat") ? "high-temperature" : type.includes("cold") ? "below-reference temperature" : type.includes("rain") || type.includes("flood") ? "high-rainfall" : type.includes("wind") || type.includes("cyclone") ? "high-wind" : "elevated-weather";
     const score = Number.isFinite(Number(event.anomaly_score)) ? `with an anomaly score of ${formatNumber(event.anomaly_score)}/100` : "with an elevated anomaly score";
     const confidence = Number.isFinite(Number(event.confidence)) ? ` Detection confidence is ${formatNumber(event.confidence)}%.` : " Detection confidence is unavailable.";
     const persistence = values.persistence === null || values.persistence === undefined ? "an unknown duration" : `approximately ${formatNumber(values.persistence)} hours`;
     const area = event.affected_area_km2 === null || event.affected_area_km2 === undefined ? "an unreported area" : `${formatNumber(event.affected_area_km2)} km²`;
     const movement = safeValue(event.movement, "an unknown direction").toString().toLowerCase();
-    byId("evidenceExplanation").textContent = `Persistent ${signal} conditions were detected across ${area}, ${score}. The anomaly persists for ${persistence} and shows a coherent ${movement} movement pattern.${confidence}`;
+    byId("evidenceExplanation").textContent = `Persistent ${signal} conditions were detected at the forecast point across ${area}, ${score}. The signal persists for ${persistence}; the displayed ${movement} path is an endpoint interpolation, not object tracking.${confidence}`;
 }
 
 function updateCounters() {
@@ -139,10 +139,13 @@ function renderSelectedEvent() {
     const selectedHorizon = byId("horizon").value;
     byId("eventTitle").textContent = event?.id === undefined ? "EVENT N/A" : `EVENT #${event.id}`;
     byId("eventType").textContent = safeValue(event?.type);
-    byId("forecast").textContent = event?.forecast_start === undefined || event?.forecast_end === undefined ? "N/A" : `+${selectedHorizon}h of +${event.forecast_start}h to +${event.forecast_end}h`;
+    const eventEnd = Number(event?.forecast_end);
+    const visibleEnd = Number.isFinite(eventEnd) ? Math.min(Number(selectedHorizon), eventEnd) : null;
+    byId("forecast").textContent = event?.forecast_start === undefined || visibleEnd === null ? "N/A" : `+${visibleEnd}h visible of +${event.forecast_start}h to +${event.forecast_end}h`;
     byId("start").textContent = event?.start ? `${safeValue(event.start.lat)}, ${safeValue(event.start.lon)}` : "N/A";
     byId("latest").textContent = event?.latest ? `${safeValue(event.latest.lat)}, ${safeValue(event.latest.lon)}` : "N/A";
     byId("movement").textContent = safeValue(event?.movement);
+    byId("speed").textContent = formatNumber(event?.speed_kmh, " km/h");
     byId("rainfall").textContent = formatNumber(event?.peak_rainfall, " mm");
     byId("score").textContent = formatNumber(event?.anomaly_score, "/100");
     byId("riskBadge").textContent = safeValue(event?.risk, "RISK N/A");
@@ -251,7 +254,7 @@ async function fetchWithTimeout(url, options = {}) {
 
 async function trackEvent() {
     if (!selectedEvent) return showToast("Select an event before tracking.");
-    const button = byId("trackBtn"); button.disabled = true; button.textContent = "TRACKING...";
+    const button = byId("trackBtn"); button.disabled = true; button.textContent = "LOADING PATH...";
     try {
         const response = await fetchWithTimeout(`${API_BASE}/api/events/${selectedEvent.id}/track`);
         if (!response.ok) throw new Error(`Tracking request failed (${response.status})`);
@@ -260,9 +263,9 @@ async function trackEvent() {
         selectedEvent = { ...selectedEvent, ...tracked };
         renderSelectedEvent(); renderTimeline(); drawTrajectory(getVisibleTrajectory());
         setApiStatus(true);
-        showToast(`Trajectory loaded for Event #${selectedEvent.id}.`);
+        showToast(`Forecast path loaded for Event #${selectedEvent.id}.`);
     } catch (error) { showToast(`Unable to track event: ${error.name === "AbortError" ? "request timed out" : error.message}`, true); setApiStatus(false); }
-    finally { button.disabled = false; button.textContent = "TRACK WEATHER EVENT"; }
+    finally { button.disabled = false; button.textContent = "SHOW FORECAST PATH"; }
 }
 
 async function createAlert() {
@@ -278,10 +281,10 @@ async function createAlert() {
         byId("alertId").textContent = safeValue(result.alert_id); byId("alertEvent").textContent = `#${safeValue(selectedEvent.id)} · ${safeValue(selectedEvent.type)}`;
         byId("alertSeverity").textContent = safeValue(result.severity, selectedEvent.risk); byId("alertPosition").textContent = `${latitude}, ${longitude}`;
         byId("alertTimestamp").textContent = new Date().toLocaleString(); byId("alertAction").textContent = selectedEvent.type.toLowerCase().includes("heat") ? "Activate heat-health monitoring and hydration support." : "Notify local responders and monitor the 5 km impact zone.";
-        byId("alertPanel").hidden = false; alertLayer.clearLayers(); const zone = L.circle([latitude, longitude], { radius: 5000, color: "#55e0a0", fillColor: "#55e0a0", fillOpacity: .18, weight: 2 }); zone.bindPopup(`<b>5 km alert zone</b><br>${safeValue(result.alert_id)}<br>${safeValue(selectedEvent.type)}`).addTo(alertLayer); map.fitBounds(zone.getBounds(), { padding: [30, 30] });
+        byId("alertPanel").hidden = false; alertLayer.clearLayers(); const zone = L.circle([latitude, longitude], { radius: 5000, color: "#55e0a0", fillColor: "#55e0a0", fillOpacity: .18, weight: 2 }); zone.bindPopup(`<b>5 km alert radius</b><br>${safeValue(result.alert_id)}<br>${safeValue(selectedEvent.type)}`).addTo(alertLayer); map.fitBounds(zone.getBounds(), { padding: [30, 30] });
         setApiStatus(true); showToast("Alert generated successfully.");
     } catch (error) { showToast(`Unable to generate alert: ${error.name === "AbortError" ? "request timed out" : error.message}`, true); setApiStatus(false); }
-    finally { alertRequestInFlight = false; button.disabled = false; button.textContent = "GENERATE 5 KM ALERT"; }
+    finally { alertRequestInFlight = false; button.disabled = false; button.textContent = "GENERATE 5 KM ALERT RADIUS"; }
 }
 
 async function loadEvents() {

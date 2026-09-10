@@ -17,6 +17,12 @@ THRESHOLDS = {
     "wind_reference_kmh": 35.0,
 }
 
+SEVERITY_THRESHOLDS = {
+    "SEVERE": 80.0,
+    "HIGH": 60.0,
+    "MODERATE": 40.0,
+}
+
 
 def _number(value: Any) -> float | None:
     try:
@@ -74,11 +80,11 @@ def calculate_anomaly_score(point: dict[str, Any]) -> tuple[float, str, str, flo
 
 
 def classify_severity(score: float) -> str:
-    if score >= 80:
+    if score >= SEVERITY_THRESHOLDS["SEVERE"]:
         return "SEVERE"
-    if score >= 60:
+    if score >= SEVERITY_THRESHOLDS["HIGH"]:
         return "HIGH"
-    if score >= 40:
+    if score >= SEVERITY_THRESHOLDS["MODERATE"]:
         return "MODERATE"
     return "NORMAL"
 
