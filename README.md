@@ -1,125 +1,129 @@
-# SIH26078 Weather Anomaly Intelligence Platform
+# AI Weather Intelligence
 
-## AI-Driven Spatio-Temporal Tracking of Extreme Weather Anomalies in Medium-Range Forecasts
+SIH26078 prototype for **AI-driven spatio-temporal tracking of extreme weather anomalies in medium-range forecasts**.
 
-Technically defensible scientific prototype built for **SIH Problem Statement 26078**.
+The dashboard demonstrates the operational chain:
 
----
+`DETECT -> TRACK -> PREDICT -> EXPLAIN -> LOCALIZE -> ALERT`
 
-## Scientific Architecture
+## What Is Implemented
 
-```
-                      NWP / EPS DATA INGESTION
-     (Open-Meteo Operational | NEPS-G 12km | NCUM Global | ERA5 / IMDAA)
-                                 │
-                                 ▼
-                     DATA VALIDATION & PROVENANCE
-         (Strict coordinate, unit, monotonicity & NaN/Inf checking)
-                                 │
-                                 ▼
-                   CLIMATOLOGICAL BASELINE ENGINE
-             (Location- & Day-of-Year Dependent 30-yr Normal)
-                                 │
-                                 ▼
-                 ANOMALY & EXTREME FORECAST INDEX (EFI)
-             (Standardized z-score, P95/P99, ECMWF Integral Quadrature)
-                                 │
-                                 ▼
-                    SPATIAL ANOMALY EXTRACTION
-          (Gridded anomaly, Morphological filter, Connected objects)
-                                 │
-                                 ▼
-                     WEATHER OBJECT TRACKER
-             (Geodesic Haversine/Vincenty, Lifecycle Tracking)
-                                 │
-            ┌────────────────────┴────────────────────┐
-            ▼                                         ▼
-   SPHERICAL GRAPH & GNN                 CONDITIONAL DIFFUSION (12km→5km)
-- Icosahedral Geodesic Mesh (Icosphere)   - Topography Conditioning (DEM/Slope)
-- SphericalGraphConv + Temporal GRU      - Tail-Preserving Pinball Loss
-- Event-Level Split (Zero Leakage)       - Physics-Informed Moisture Continuity
-            │                                         │
-            └────────────────────┬────────────────────┘
-                                 ▼
-                      IMPACT & ALERT ENGINE
-         (5 km High-Res Model Grid vs 5.0 km Emergency Alert Buffer)
-                                 │
-                                 ▼
-               SCIENTIFIC REST API & LEAFLET DASHBOARD
+- Open-Meteo medium-range forecast ingestion with a 15-minute in-memory cache.
+- Deterministic demo mode using `backend/events.json` when explicitly selected.
+- Prototype climatological baseline with variable-specific means and standard deviations.
+- Normalized temperature, rainfall, and wind z-scores combined into a transparent weighted anomaly score.
+- Severity, persistence, confidence, dominant-variable, baseline, and forecast evidence fields.
+- Explainable trajectory geometry: direction, distance, speed, displacement, intensity change, and confidence.
+- Statistical uncertainty bands that widen with forecast horizon.
+- Backend-derived spatial forecast sample field with Leaflet layer controls.
+- Event lifecycle, severity forecast, expected peak, scientific evidence, risk drivers, compound-hazard flag, and prototype hazard priority.
+- Controlled prototype validation metrics for precision, recall, F1, false-alarm rate, and detection rate.
+- Guided 90-120 second Judge Mode for the internal demonstration.
+- 5 km local impact geometry and structured alert generation.
+- Interactive Leaflet map, forecast playback, selected-event analysis, trajectory, and alert zone.
+- Same-origin Vercel deployment through `api/index.py`.
+- Arbitrary city/coordinate Location Intelligence using public geocoding and Open-Meteo forecasts.
+- Tomorrow and multi-day forecast comparison against the prototype baseline, with z-scores, composite score, risk, explanation, and 5 km point analysis.
+
+The current model is statistical. It is not a trained GNN, an official warning system, or a complete 30-year ERA5 climatology.
+
+## Data And Status Honesty
+
+Live requests use the public Open-Meteo forecast API. The UI reports `LIVE`, `CACHED`, `DEMO`, or unavailable status from the backend. Cached or demo records are never labelled live. The baseline is explicitly labelled **Prototype climatological baseline** and can later be replaced by an ERA5-derived archive.
+
+## Methodology
+
+For each forecast point:
+
+```text
+temperature_z = (temperature - temperature_baseline) / temperature_std
+rainfall_z    = (rainfall - rainfall_baseline) / rainfall_std
+wind_z        = (wind - wind_baseline) / wind_std
+composite     = 0.35 * abs(temperature_z)
+              + 0.40 * max(rainfall_z, 0)
+              + 0.25 * max(wind_z, 0)
 ```
 
----
+The composite is normalized to a 0-100 display score. Persistence is measured across forecast steps, and confidence combines data completeness, persistence, and magnitude. Trajectory speed uses great-circle distance divided by forecast time. The uncertainty corridor is a prototype statistical estimate, not an ensemble forecast.
 
-## Subsystem Implementation Matrix
+## API
 
-| SIH 26078 Requirement | Status | Implementation Evidence |
+| Method | Route | Purpose |
 | --- | --- | --- |
-| **Data Provider Abstraction** | **IMPLEMENTED** | `backend/scientific/data_provider.py` (Standardized internal schema, xarray/numpy, Open-Meteo, NEPS-G, NCUM, ERA5, IMDAA, Synthetic). |
-| **Data Validation & Provenance** | **IMPLEMENTED** | `backend/scientific/data_validator.py` (Validates bounds, monotonic coords, NaN/Inf, units, and generates SHA-256 provenance hash). |
-| **Location-Dependent Climatology** | **IMPLEMENTED** | `backend/scientific/climatology_engine.py` (Day-of-Year rolling baseline; mean, std, percentiles P10..P99; no flat 30°C thresholds). |
-| **Standardized Anomaly Engine** | **IMPLEMENTED** | `backend/scientific/anomaly_engine.py` (z-score, percentile ranking, threshold exceedance, preserving physical values). |
-| **Extreme Forecast Index (EFI)** | **IMPLEMENTED** | `backend/scientific/efi_engine.py` (ECMWF integral discrete quadrature between ensemble forecast and climatological CDF). |
-| **Spatial Object Extraction** | **IMPLEMENTED** | `backend/scientific/spatial_extraction.py` (Morphological opening, 8-connected components, true Earth surface area in km²). |
-| **Geodesic Object Tracking** | **IMPLEMENTED** | `backend/scientific/object_tracker.py` (Haversine distances, IoU matching, bearings, speed km/h, lifecycle state machine). |
-| **Spherical Mesh Builder** | **IMPLEMENTED** | `backend/scientific/spherical_mesh.py` (Subdivided icosahedron, node xyz on unit sphere, lat/lon mapping, dateline/pole handling). |
-| **Spatio-Temporal GNN** | **IMPLEMENTED & TRAINED** | `backend/scientific/gnn_model.py` & `train_gnn.py` (SphericalGraphConv + Temporal GRU, event-split checkpoint generated). |
-| **Conditional Weather Diffusion** | **IMPLEMENTED (ARCH READY)**| `backend/scientific/diffusion_downscaling.py` (DDPM U-Net downscaler, 12 km -> 5 km, topography conditioned). |
-| **Extreme Tail Preservation** | **IMPLEMENTED** | `backend/scientific/diffusion_downscaling.py` (Pinball tail-loss; solves spectral over-smoothing). |
-| **Physics-Informed Loss** | **IMPLEMENTED** | `backend/scientific/physics_loss.py` (Moisture continuity, non-negativity of physical variables, thermodynamic gradient smoothness). |
-| **5 km Impact & Severity Engine** | **IMPLEMENTED** | `backend/scientific/impact_engine.py` (Clearly distinguishes 5 km downscaled model grid from 5 km emergency alert buffer). |
-| **Historical Validation Framework** | **IMPLEMENTED** | `backend/scientific/historical_validation.py` (Evaluates track skill, centroid error, and RMSE without fabricating data). |
-| **Model Status Registry** | **IMPLEMENTED** | `backend/scientific/historical_validation.py` (Central backend metadata tracking real operational readiness). |
+| GET | `/api/health` | Basic service health |
+| GET | `/api/system/status` | API, data, model, tracker, map, and event status |
+| GET | `/api/events` | Current live, cached, or demo events |
+| GET | `/api/anomalies` | Anomaly records and baseline metadata |
+| GET | `/api/events/{id}` | One enriched event |
+| GET | `/api/events/{id}/track` | Trajectory and uncertainty data |
+| GET | `/api/events/{id}/analysis` | Generated evidence-based event analysis |
+| GET | `/api/events/{id}/impact` | Calculated impact zone, weather values, and risk |
+| POST | `/api/alerts` | Structured 5 km alert response |
+| GET | `/api/forecast-bust` | Calculated revision status when an in-process prior snapshot exists |
+| GET | `/api/validation` | Controlled prototype validation metrics |
+| GET | `/api/spatial-field` | Forecast sample cells for map anomaly layers |
+| GET | `/api/location-intelligence?location=Chennai` | Geocode, forecast, baseline comparison, and local intelligence for any location |
+| POST | `/api/location-events` | Create a trackable event when a searched location crosses the detection threshold |
 
----
+## Local Setup
 
-## Data Modes
-
-The platform supports 3 explicit data modes:
-1. **LIVE**: Only real operational provider data (Open-Meteo public NWP) with Day-of-Year climatology.
-2. **RESEARCH**: Multi-member ensemble (NEPS-G adapter), Spatio-Temporal GNN, and 12 km -> 5 km Diffusion downscaling.
-3. **DEMO**: Simulated test fixtures clearly labeled to prevent masquerading as live predictions.
-
----
-
-## Running the Platform
-
-### Backend API
+Backend:
 
 ```powershell
-py -m uvicorn main:app --reload --port 8001
+cd backend
+py -m venv venv
+venv\Scripts\python.exe -m pip install -r requirements.txt
+venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000
 ```
 
-Or run `run_backend.bat`.
+Frontend: open `frontend/index.html` with VS Code Live Server, or run `run_frontend.bat` and open `http://127.0.0.1:5500`.
 
-### Frontend Dashboard
+For deterministic judging:
 
 ```powershell
-cd frontend
-py -m http.server 5500
+$env:DATA_MODE="DEMO"
 ```
 
-Open `http://127.0.0.1:5500/index.html` in your web browser.
+For Open-Meteo data, use `LIVE` or omit `DATA_MODE`.
 
----
+## Vercel Deployment
 
-## Automated Test Suite
-
-Run the full scientific test suite (15 tests covering all 10 core scientific domains):
+The repository includes `api/index.py`, `vercel.json`, and a root `requirements.txt` for the Python function. Frontend requests use same-origin `/api/...` paths after deployment.
 
 ```powershell
-py -m unittest tests.test_scientific_suite
+npx vercel --prod
 ```
 
-Run the existing contract tests:
+The current production deployment is `https://sih-lac-three.vercel.app`.
 
-```powershell
-py -m unittest backend.test_scientific_contract
-```
+Forecast revision snapshots are held in process memory only. A fresh or replaced Vercel serverless instance correctly reports insufficient history rather than fabricating a comparison.
 
----
+## Demo Script
 
-## Reproducibility
+1. Open the dashboard and show API, data source, tracker, model, and map status.
+2. Select `Extreme Rainfall` and click `ANALYZE EVENT`.
+3. Explain the dominant signal, prototype baseline, score, confidence, and persistence.
+4. Click `TRACK WEATHER EVENT` and show direction, speed, displacement, and uncertainty.
+5. Press `PLAY FORECAST` to move through the forecast horizon.
+6. Click `GENERATE 5 KM ALERT` and show the calculated zone, area, valid window, and action.
+7. Explain that forecast-bust comparison becomes available after a previous forecast snapshot is retained.
 
-- Master Experiment Configuration: `configs/experiment_config.yaml`
-- GNN Training Pipeline: `py -m scientific.train_gnn --epochs 5`
-- Pinned Dependencies: `backend/requirements.txt`
+Judge Mode provides the same flow as a guided sequence: detect, inspect scientific evidence, explain, track, play the forecast, show uncertainty, generate impact, and generate the alert.
+
+Location Intelligence provides a second workflow: search a city or `latitude,longitude`, inspect tomorrow's real Open-Meteo forecast, compare it with the prototype baseline, and view the calculated 5 km local analysis. Nominatim is used for public geocoding. If the forecast provider fails after geocoding succeeds, the response is explicitly labelled `DEMO` and includes the fallback reason; it is never labelled live.
+
+## Future Production Extension
+
+The defensible evolution is:
+
+`NWP / NEPS-G + 30-year ERA5 baseline + spherical grid + GNN event tracking + physics constraints + diffusion downscaling + operational warning integration`
+
+Those components are future work, not claims about this prototype. Population exposure, official warning dissemination, persistent forecast revision storage, and trained ML inference are also not configured yet.
+
+## Prototype Validation
+
+`GET /api/validation` evaluates a small controlled synthetic dataset through a transparent threshold check. Its precision, recall, F1, false-alarm rate, and detection rate are software-demonstration metrics only; they are not operational accuracy or real-world validation.
+
+## SIH Relevance
+
+The prototype makes the problem legible within a short demonstration: it identifies **what** is anomalous, **where** the event is moving, **when** it persists in the medium-range forecast, **why** the system detected it, and **what** a localized 5 km response could look like.

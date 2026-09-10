@@ -3,337 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Weather Anomaly Intelligence | SIH26078 Scientific Architecture</title>
+<title>AI Weather Intelligence | Extreme Weather Monitoring</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260910-3">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <div>
-    <div class="brand">WEATHER ANOMALY INTELLIGENCE</div>
-    <div class="sub">SIH26078 · AI-Driven Spatio-Temporal Tracking of Extreme Weather Anomalies in Medium-Range Forecasts</div>
-  </div>
-  <div class="headerRight">
-    <div class="modeControl">
-      <label for="modeSelector">DATA MODE:</label>
-      <select id="modeSelector">
-        <option value="LIVE" selected>LIVE (Open-Meteo NWP)</option>
-        <option value="RESEARCH">RESEARCH (EPS / Reanalysis)</option>
-        <option value="DEMO">DEMO (Simulated Fixtures)</option>
-      </select>
-    </div>
-    <div id="apiStatus" class="status">● CONNECTING</div>
-  </div>
+<header class="commandHeader">
+  <div class="brandBlock"><div class="brand">AI WEATHER INTELLIGENCE</div><div class="sub">Extreme Weather Monitoring &amp; Decision Support</div></div>
+  <div class="headerStatus"><span class="liveMark">●</span><span id="apiStatus">SYSTEM CONNECTING</span><span class="headerDivider"></span><span id="lastUpdate">UPDATED: N/A</span><button id="judgeModeBtn" class="judgeButton">JUDGE MODE</button></div>
 </header>
 
-<main>
-  <!-- Scientific Subsystem Status Bar -->
-  <section class="modelStatusBar">
-    <div class="statusBarHeader">
-      <span>SUBSYSTEM READINESS & PROVENANCE METADATA</span>
-      <button id="toggleStatusDetails" class="miniBtn">VIEW FULL MATRIX</button>
-    </div>
-    <div class="statusPills" id="statusPills">
-      <div class="pill" id="pillNwp"><span>NWP DATA:</span> <b>CHECKING...</b></div>
-      <div class="pill" id="pillClim"><span>CLIMATOLOGY:</span> <b>DOY ROLLING</b></div>
-      <div class="pill" id="pillEfi"><span>EFI ENGINE:</span> <b>ECMWF QUAD</b></div>
-      <div class="pill" id="pillGnn"><span>GNN:</span> <b>TRAINED (PROTOTYPE)</b></div>
-      <div class="pill" id="pillDiff"><span>DIFFUSION 5KM:</span> <b>UNTRAINED (READY)</b></div>
-      <div class="pill" id="pillPhys"><span>PHYSICS LOSS:</span> <b>VALIDATED</b></div>
-      <div class="pill" id="pillDevice"><span>COMPUTE:</span> <b>CPU</b></div>
-    </div>
+<main class="dashboardShell">
+  <section class="statusStrip" aria-label="System status">
+    <div><span>DATA</span><b id="stripData">LIVE</b></div><div><span>MODEL</span><b id="stripModel">ONLINE</b></div><div><span>TRACKER</span><b id="stripTracker">ONLINE</b></div><div><span>MAP</span><b id="stripMap">ONLINE</b></div><div><span>ALERTS</span><b id="stripAlerts">READY</b></div>
   </section>
 
-  <section class="toolbar">
-    <div>
-      <label for="horizon">Forecast horizon</label>
-      <select id="horizon">
-        <option value="24">+24 HOURS</option>
-        <option value="48">+48 HOURS</option>
-        <option value="72">+72 HOURS</option>
-        <option value="96" selected>+96 HOURS</option>
-      </select>
-    </div>
-    <div>
-      <label for="eventSelect">Tracked weather event</label>
-      <select id="eventSelect"></select>
-    </div>
-    <div class="layerToggles">
-      <label>Map layers</label>
-      <div class="toggleGroup">
-        <label class="toggleLabel"><input type="checkbox" id="toggleTrack" checked> Geodesic Track</label>
-        <label class="toggleLabel"><input type="checkbox" id="toggleImpact" checked> 5 km Grid Footprint</label>
-        <label class="toggleLabel"><input type="checkbox" id="toggleAlertRadius" checked> Alert Buffer</label>
-      </div>
-    </div>
-    <button id="trackBtn">SHOW FORECAST PATH</button>
-    <button id="downscalingBtn" class="secondary">12 KM → 5 KM DOWNSCALING</button>
-    <button id="validationBtn" class="secondary">HISTORICAL VALIDATION</button>
-    <button id="analyzeBtn" class="secondary accent">ANALYZE EVENT</button>
-    <button id="alertBtn" class="primaryAlert">GENERATE 5 KM ALERT RADIUS</button>
+  <section class="anomalyCommand" aria-label="Anomaly map status">
+    <div class="commandLabel"><span class="eyebrow">AUTOMATIC ANOMALY DETECTION</span><b>Forecast anomalies are displayed directly on the map.</b></div>
+    <div class="anomalyCommandStatus"><span class="liveMark">●</span><span id="anomalyMapStatus" role="status">LOADING ANOMALY FIELD...</span></div>
+    <span class="locationStatus">Select a map signal or monitored event for details.</span>
   </section>
 
-  <div class="demoBanner">
-    <span id="dataModeBadge">LIVE DATA</span>
-    <b id="dataModeText">Open-Meteo NWP forecast with Day-of-Year climatology & Extreme Forecast Index</b>
-    <small id="lastUpdate">Updated: N/A</small>
-  </div>
+  <section id="judgePanel" class="judgePanel" hidden>
+    <div class="judgeRail"><span class="eyebrow">GUIDED DEMONSTRATION</span><div class="judgeSteps"><span class="judgeStepNode active" data-step="0">01 DETECT</span><span class="judgeStepNode" data-step="1">02 EXPLAIN</span><span class="judgeStepNode" data-step="2">03 TRACK</span><span class="judgeStepNode" data-step="3">04 PREDICT</span><span class="judgeStepNode" data-step="4">05 LOCALIZE</span><span class="judgeStepNode" data-step="5">06 ALERT</span></div><b id="judgeStepTitle">STEP 1 · DETECT ANOMALY</b><small id="judgeStepText">Select a detected event and inspect the system state.</small></div>
+    <div class="judgeActions"><button id="judgeNextBtn">NEXT STEP</button><button id="judgeResetBtn" class="secondary">RESET</button></div>
+  </section>
 
-  <section class="grid">
-    <div class="mapCard">
-      <div id="map"></div>
-      <div class="legend">
-        <span><i class="dot severe"></i> Severe (Score ≥ 75)</span>
-        <span><i class="dot high"></i> High (Score ≥ 55)</span>
-        <span><i class="dot moderate"></i> Moderate (Score ≥ 35)</span>
-        <span><i class="box grid5km"></i> 5 km High-Res Grid Field</span>
-      </div>
-    </div>
+  <section class="workspaceGrid">
+    <section class="mapPanel panel">
+      <div class="panelTopline"><div><span class="eyebrow">GEOSPATIAL RISK FIELD</span><b>Forecast anomaly map</b></div><div class="mapReadout"><span>FORECAST <b id="mapForecast">+96H</b></span><span>EVENT <b id="mapEvent">N/A</b></span></div></div>
+      <div class="mapFrame"><div id="map"></div><div class="mapLegend"><span class="legendTitle">RISK LEVEL</span><span><i class="dot normal"></i>NORMAL</span><span><i class="dot moderate"></i>MODERATE</span><span><i class="dot high"></i>HIGH</span><span><i class="dot severe"></i>SEVERE</span></div></div>
+    </section>
 
-    <aside>
-      <div class="card">
-        <div class="eyebrow">ACTIVE ANOMALIES & SEVERITY</div>
-        <div class="activeSummary"><b id="totalCount">0</b><span>DETECTED WEATHER EVENTS</span></div>
-        <div class="riskGrid">
-          <div><b id="severeCount">0</b><span>SEVERE</span></div>
-          <div><b id="highCount">0</b><span>HIGH</span></div>
-          <div><b id="moderateCount">0</b><span>MODERATE</span></div>
-        </div>
-      </div>
+    <aside class="intelligenceRail">
+      <section class="panel locationCard" id="locationCard" hidden>
+        <div class="panelTopline"><div><span class="eyebrow">LOCATION INTELLIGENCE</span><h2 id="locationName">LOCATION</h2><small id="locationMeta"></small></div><span id="locationSource" class="sourcePill">LIVE</span></div>
+        <div class="forecastHero"><div><span class="eyebrow">TOMORROW</span><strong id="locationTemperature">N/A</strong><span id="locationCondition">Forecast unavailable</span></div><div><span>RAIN</span><b id="locationRainfall">N/A</b></div><div><span>WIND</span><b id="locationWind">N/A</b></div></div>
+        <div class="anomalyGrid"><div><span>TEMPERATURE</span><b id="locationTemperatureZ">N/A</b></div><div><span>RAINFALL</span><b id="locationRainfallZ">N/A</b></div><div><span>WIND</span><b id="locationWindZ">N/A</b></div><div class="accentMetric"><span>COMPOSITE</span><b id="locationComposite">N/A</b></div><div><span>RISK</span><b id="locationRisk">N/A</b></div><div><span>CONFIDENCE</span><b id="locationConfidence">N/A</b></div></div>
+        <div class="statusLine"><span>WEATHER STATUS</span><b id="locationWeatherStatus">N/A</b></div>
+        <div class="whyBlock"><span class="eyebrow">WHY THIS FORECAST IS FLAGGED</span><ul id="locationExplanationList"></ul><div class="driverLine"><span>PRIMARY <b id="locationPrimary">N/A</b></span><span>SECONDARY <b id="locationSecondary">N/A</b></span></div></div>
+        <div class="compactSection"><div class="sectionTitle">FORECAST INTELLIGENCE</div><div id="locationForecastRows"></div></div>
+        <div class="compactSection"><div class="sectionTitle">FORECAST VS EXPECTED</div><div id="locationBaselineText"></div></div>
+        <div id="locationImpact" class="compactSection"><div class="sectionTitle">5 KM LOCAL IMPACT</div><div class="impactGrid"><div><span>AREA</span><b id="locationImpactArea"></b></div><div><span>TEMP</span><b id="locationImpactTemp"></b></div><div><span>RAIN</span><b id="locationImpactRain"></b></div><div><span>WIND</span><b id="locationImpactWind"></b></div><div><span>ANOMALY</span><b id="locationImpactSigma"></b></div><div><span>RISK</span><b id="locationImpactRisk"></b></div></div></div>
+        <div class="actionRow"><button id="analyzeTomorrowBtn" class="secondary">ANALYZE TOMORROW</button><button id="locationEventBtn" class="secondary" hidden>CREATE EVENT</button><button id="locationImpactBtn" class="secondary">5 KM IMPACT</button></div>
+      </section>
 
-      <div class="card systemCard">
-        <div class="eyebrow">SYSTEM & METEOROLOGICAL ENGINES</div>
-        <div class="systemRows">
-          <div><span>API STATUS</span><b id="systemApi">CONNECTING</b></div>
-          <div><span>DATA SOURCE</span><b id="systemData">LOADING</b></div>
-          <div><span>ACTIVE EVENTS</span><b id="systemEvents">0</b></div>
-          <div><span>CLIMATOLOGY</span><b id="systemClim">DOY BASELINE</b></div>
-          <div><span>SEVERITY ENGINE</span><b id="systemSeverity">AUTHORITATIVE</b></div>
-          <div><span>SPHERICAL GNN</span><b id="systemGnn">READY</b></div>
-        </div>
-      </div>
+      <section class="panel threatPanel"><div class="panelTopline"><div><span class="eyebrow">ACTIVE THREATS</span><b><span id="totalCount">0</span> MONITORED EVENTS</b></div><span class="sourcePill">EVENT MODE</span></div><div class="riskSummary"><div><b id="severeCount">0</b><span>SEVERE</span></div><div><b id="highCount">0</b><span>HIGH</span></div><div><b id="moderateCount">0</b><span>MODERATE</span></div></div><div id="threatList" class="threatList" aria-label="Active threats"></div></section>
 
-      <div class="card">
-        <div class="row"><span>SELECTED EVENT</span><b id="riskBadge">HIGH RISK</b></div>
-        <h2 id="eventTitle">EVENT #10</h2>
-        <div class="facts">
-          <div><span>METEOROLOGICAL TYPE</span><b id="eventType"></b></div>
-          <div><span>FORECAST RANGE</span><b id="forecast"></b></div>
-          <div><span>ORIGIN (START)</span><b id="start"></b></div>
-          <div><span>CURRENT CENTROID</span><b id="latest"></b></div>
-          <div><span>GEODESIC BEARING</span><b id="bearing"></b></div>
-          <div><span>PROPAGATION SPEED</span><b id="speed"></b></div>
-          <div><span>PEAK PRECIPITATION</span><b id="rainfall"></b></div>
-          <div><span>MAX TEMP ANOMALY</span><b id="temperatureAnomaly"></b></div>
-          <div><span>MAX WIND ANOMALY</span><b id="windAnomaly"></b></div>
-          <div><span>EXTREME FORECAST INDEX (EFI)</span><b id="efiValue">+0.00</b></div>
-          <div class="score"><span>AUTHORITATIVE SEVERITY SCORE</span><b id="score"></b></div>
-        </div>
-      </div>
+      <section class="panel eventPanel"><div class="panelTopline"><div><span class="eyebrow">EVENT INTELLIGENCE</span><b id="eventTitle">EVENT N/A</b></div><span id="riskBadge" class="riskBadge">NORMAL</span></div><div class="eventName" id="eventType">Select an event</div><div class="eventMetrics"><div><span>STATUS</span><b id="lifecycleStatus">N/A</b></div><div><span>COMPOSITE</span><b id="score">N/A</b></div><div><span>PEAK</span><b id="peakForecast">N/A</b></div><div><span>CONFIDENCE</span><b id="confidenceText">N/A</b></div><div><span>DIRECTION</span><b id="trackingDirection">N/A</b></div><div><span>SPEED</span><b id="trackingSpeed">N/A</b></div></div><div class="miniConfidence"><i id="confidenceBar"></i></div><div class="eventActions"><button id="analyzeBtn">ANALYZE</button><button id="trackBtn" class="secondary">TRACK</button><button id="alertBtn" class="secondary">5 KM ALERT</button></div></section>
 
-      <div class="card">
-        <div class="eyebrow">SCIENTIFIC INTERPRETATION & EXPLAINABILITY</div>
-        <p id="interpretation"></p>
-        <div class="confidence"><span>EXCEEDANCE PROBABILITY / EVIDENCE</span><b id="confidenceText"></b></div>
-        <div class="bar"><i id="confidenceBar"></i></div>
-      </div>
-
-      <div class="card evidenceCard">
-        <div class="eyebrow">SCIENTIFIC ANOMALY EVIDENCE</div>
-        <div class="evidenceGrid">
-          <div><span>PRIMARY SIGNAL</span><b id="evidenceSignal"></b></div>
-          <div><span>OBSERVED INTENSITY</span><b id="evidenceValue"></b></div>
-          <div><span>PERSISTENCE</span><b id="evidencePersistence"></b></div>
-          <div><span>AFFECTED AREA (5 KM GRID)</span><b id="evidenceCoverage"></b></div>
-          <div><span>MOTION VECTOR</span><b id="evidenceMovement"></b></div>
-          <div><span>EFI INDEX</span><b id="evidenceEfi">N/A</b></div>
-          <div><span>EXCEEDANCE PROBABILITY</span><b id="evidenceConfidence"></b></div>
-        </div>
-        <div class="baseline" id="baselineText">Baseline: Day-of-Year Rolling Climatology</div>
-        <p id="evidenceExplanation" class="evidenceExplanation"></p>
-      </div>
-
-      <div class="card">
-        <div class="eyebrow">5 KM HIGH-RESOLUTION IMPACT & EXPOSURE</div>
-        <div class="impact">
-          <div><span>AFFECTED EXTENT (KM²)</span><b id="area"></b></div>
-          <div><span>EST. POPULATION EXPOSURE</span><b id="popExposure">N/A</b></div>
-          <div><span>MULTI-FACTORIAL RISK</span><b id="impactRisk"></b></div>
-        </div>
-        <div id="impactTags" class="tags"></div>
-      </div>
+      <section class="panel whyPanel"><div class="sectionTitle">WHY THIS EVENT MATTERS</div><p id="analysisText">Select an event to generate an evidence-based interpretation.</p><ul id="whyList"></ul><div class="driverBars" id="riskDrivers"></div></section>
     </aside>
   </section>
 
-  <section class="lower">
-    <div class="card">
-      <div class="sectionTitle">SPATIO-TEMPORAL FORECAST EVOLUTION (GEODESIC TRAJECTORY)</div>
-      <div id="timeline" class="timeline"></div>
-    </div>
-    <div class="card">
-      <div class="sectionTitle">SCIENTIFIC EVIDENCE &amp; PHYSICAL REASONING</div>
-      <ul id="whyList"></ul>
-    </div>
+  <section class="analyticsGrid">
+    <section class="panel chartPanel"><div class="panelTopline"><div><span class="eyebrow">ANOMALY EVOLUTION</span><b>Composite signal over forecast time</b></div><div class="chartSwitch"><button id="chartCompositeBtn" class="active">COMPOSITE</button><button id="chartTemperatureBtn">TEMP</button><button id="chartRainfallBtn">RAIN</button><button id="chartWindBtn">WIND</button></div></div><div id="eventChart" class="chartCanvas"></div><div class="chartAxis"><span>NOW</span><span>+24H</span><span>+48H</span><span>+72H</span><span>+96H</span></div></section>
+    <section class="panel forecastPanel"><div class="sectionTitle">FORECAST CONFIDENCE</div><div id="confidenceTimeline" class="confidenceRows"></div><small>Prototype statistical uncertainty estimate</small><div class="lifecycle"><span>DETECTED</span><span>CONFIRMED</span><span>INTENSIFYING</span><span>PEAK</span><span>WEAKENING</span></div></section>
+    <section class="panel evidencePanel"><div class="panelTopline"><span class="eyebrow">SCIENTIFIC EVIDENCE</span><button id="evidenceBtn" class="textButton">VIEW DETAILS</button></div><div class="evidenceGrid"><div><span>FORECAST</span><b id="scienceForecast">N/A</b></div><div><span>BASELINE</span><b id="scienceBaseline">N/A</b></div><div><span>DEVIATION</span><b id="scienceDeviation">N/A</b></div><div><span>STD DEV</span><b id="scienceStd">N/A</b></div><div><span>Z-SCORE</span><b id="scienceZ">N/A</b></div><div><span>INTENSITY TREND</span><b id="scienceTrend">N/A</b></div></div></section>
+    <section class="panel impactPanel"><div class="sectionTitle">WHAT HAPPENS NEXT?</div><div class="nextMetrics"><div><span>CURRENT</span><b id="impactRisk">N/A</b></div><div><span>AREA</span><b id="area">N/A</b></div><div><span>DISPLACEMENT</span><b id="trackingDistance">N/A</b></div></div><p id="responseText">Select an event to view decision-support guidance.</p><button id="responseAlertBtn" class="secondary">VIEW DECISION SUPPORT</button></section>
   </section>
 
-  <!-- Analyze Event Result Panel -->
-  <section id="analyzePanel" class="analyzePanel" hidden>
-    <div class="analyzeHeader">
-      <div>
-        <div class="eyebrow">SCIENTIFIC DEEP-ANALYSIS REPORT</div>
-        <h2>EVENT ANALYSIS: <span id="analyzePanelTitle">—</span></h2>
-      </div>
-      <button id="closeAnalyzeBtn" class="iconButton" aria-label="Close analysis">&times;</button>
-    </div>
-    <p class="analyzeNote" id="analyzeSummary"></p>
-    <div class="analyzeGrid">
-      <!-- Climatology -->
-      <div class="analyzeCard">
-        <div class="eyebrow">CLIMATOLOGICAL BASELINE (DOY)</div>
-        <div class="analyzeRows">
-          <div><span>TEMP MEAN / STD</span><b id="anlzTempClim">—</b></div>
-          <div><span>PRECIP MEAN / STD</span><b id="anlzPrecipClim">—</b></div>
-          <div><span>WIND MEAN / STD</span><b id="anlzWindClim">—</b></div>
-          <div><span>METHOD</span><b id="anlzClimMethod">DOY Rolling</b></div>
-        </div>
-      </div>
-      <!-- Anomaly Z-scores -->
-      <div class="analyzeCard">
-        <div class="eyebrow">ANOMALY Z-SCORES</div>
-        <div class="analyzeRows">
-          <div><span>TEMPERATURE σ</span><b id="anlzZTemp">—</b></div>
-          <div><span>PRECIPITATION σ</span><b id="anlzZPrecip">—</b></div>
-          <div><span>WIND σ</span><b id="anlzZWind">—</b></div>
-          <div><span>COMPOSITE MAX σ</span><b id="anlzZMax">—</b></div>
-        </div>
-      </div>
-      <!-- EFI -->
-      <div class="analyzeCard">
-        <div class="eyebrow">EXTREME FORECAST INDEX (EFI)</div>
-        <div class="analyzeRows">
-          <div><span>EFI VALUE</span><b id="anlzEfi">—</b></div>
-          <div><span>INTERPRETATION</span><b id="anlzEfiInterp">—</b></div>
-          <div><span>PROVENANCE</span><b id="anlzEfiProv">—</b></div>
-        </div>
-      </div>
-      <!-- Severity -->
-      <div class="analyzeCard">
-        <div class="eyebrow">AUTHORITATIVE SEVERITY</div>
-        <div class="analyzeRows">
-          <div><span>SEVERITY BAND</span><b id="anlzSevBand">—</b></div>
-          <div><span>MULTI-FACTORIAL SCORE</span><b id="anlzSevScore">—</b></div>
-          <div><span>EXCEEDANCE PROB.</span><b id="anlzSevExceed">—</b></div>
-        </div>
-      </div>
-      <!-- Subsystem Readiness -->
-      <div class="analyzeCard wide">
-        <div class="eyebrow">SUBSYSTEM READINESS MATRIX</div>
-        <div class="analyzeRows">
-          <div><span>CLIMATOLOGY</span><b id="anlzSubClim">—</b></div>
-          <div><span>ANOMALY ENGINE</span><b id="anlzSubAnomaly">—</b></div>
-          <div><span>EFI ENGINE</span><b id="anlzSubEfi">—</b></div>
-          <div><span>SPATIO-TEMPORAL GNN</span><b id="anlzSubGnn">—</b></div>
-          <div><span>CONDITIONAL DIFFUSION</span><b id="anlzSubDiff">—</b></div>
-          <div><span>PHYSICS CONSTRAINTS</span><b id="anlzSubPhys">—</b></div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <section class="utilityRow"><div class="modeControls"><span class="eyebrow">EVENT WORKFLOW</span><select id="eventSelect" aria-label="Select event"></select><select id="horizon" aria-label="Forecast horizon"><option value="24">+24 HOURS</option><option value="48">+48 HOURS</option><option value="72">+72 HOURS</option><option value="96" selected>+96 HOURS</option></select></div><div class="playback"><span class="eyebrow">FORECAST PLAYBACK</span><b id="playbackHour">+96H</b><input id="forecastSlider" type="range" min="0" max="96" step="24" value="96" aria-label="Forecast playback hour"><button id="playBtn" class="secondary">PLAY</button><button id="resetBtn" class="secondary">RESET</button><span id="playbackStatus">PAUSED</span></div></section>
 
-  <!-- Downscaling Comparison Modal -->
-  <div id="downscalingModal" class="modal" hidden>
-    <div class="modalContent">
-      <div class="modalHeader">
-        <div>
-          <div class="eyebrow">CONDITIONAL DIFFUSION EVALUATION (SPECTRAL SMOOTHING)</div>
-          <h2>12 KM COARSE NWP → 5 KM HIGH-RESOLUTION DOWNSCALING</h2>
-        </div>
-        <button id="closeDownscalingBtn" class="iconButton">&times;</button>
-      </div>
-      <p class="modalDesc">
-        Addresses the SIH spectral-smoothing dilemma. Compares coarse 12 km NWP input against standard bicubic interpolation
-        and the Conditional Diffusion Model with physics-informed conservation and extreme-tail preservation losses.
-      </p>
-      <div class="compareGrid">
-        <div class="compareCol">
-          <h3>COARSE INPUT (12 KM)</h3>
-          <div class="metricBadge">Resolution: 12.0 km</div>
-          <div class="fieldBox" id="boxCoarse"></div>
-          <div class="statRow"><span>Max Intensity:</span> <b id="statCoarseMax">--</b></div>
-          <div class="statRow"><span>Upper 95th:</span> <b id="statCoarseP95">--</b></div>
-        </div>
-        <div class="compareCol">
-          <h3>BASELINE BICUBIC (5 KM)</h3>
-          <div class="metricBadge warning">Smoothed Extremes</div>
-          <div class="fieldBox" id="boxBicubic"></div>
-          <div class="statRow"><span>RMSE vs Truth:</span> <b id="statBicubicRmse">--</b></div>
-          <div class="statRow"><span>Peak Underestimation:</span> <b id="statBicubicPeak" class="negative">--</b></div>
-        </div>
-        <div class="compareCol highlight">
-          <h3>CONDITIONAL DIFFUSION (5 KM)</h3>
-          <div class="metricBadge success">Tail-Preserving Model</div>
-          <div class="fieldBox" id="boxDiffusion"></div>
-          <div class="statRow"><span>RMSE vs Truth:</span> <b id="statDiffRmse">--</b></div>
-          <div class="statRow"><span>Tail Preservation:</span> <b id="statDiffPeak" class="positive">Preserved</b></div>
-        </div>
-      </div>
-      <div class="modalFooter">
-        <span id="spectralResult">Spectral Smoothing Addressed: True</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Historical Validation Modal -->
-  <div id="validationModal" class="modal" hidden>
-    <div class="modalContent">
-      <div class="modalHeader">
-        <div>
-          <div class="eyebrow">HISTORICAL VALIDATION FRAMEWORK</div>
-          <h2 id="valTitle">CYCLONE BIPARJOY TRACK SKILL BENCHMARK</h2>
-        </div>
-        <button id="closeValidationBtn" class="iconButton">&times;</button>
-      </div>
-      <p class="modalDesc">
-        Validates forecast tracks against actual IMD Best Track and reanalysis observations without fabricating metrics.
-      </p>
-      <div class="valGrid">
-        <div class="valCard"><span>MEAN CENTROID ERROR</span><b id="valCentroidErr">--</b></div>
-        <div class="valCard"><span>MAX CENTROID ERROR</span><b id="valMaxCentroidErr">--</b></div>
-        <div class="valCard"><span>INTENSITY RMSE</span><b id="valIntensityRmse">--</b></div>
-        <div class="valCard"><span>FRAMEWORK STATUS</span><b id="valStatus" class="highlightText">--</b></div>
-      </div>
-      <div class="provBox">
-        <span>PROVENANCE:</span>
-        <code id="valProvenance">--</code>
-      </div>
-    </div>
-  </div>
+  <section class="technicalDetails" hidden><span id="systemApi">CONNECTING</span><span id="impactTags"></span><ul id="whyList"></ul><span id="evidenceExplanation"></span>
+    <span id="dataModeBadge">LIVE DATA</span><b id="dataModeText">Real forecast data with statistical anomaly detection</b><span id="baselineText">Baseline: Prototype climatological baseline</span><span id="systemData">LOADING</span><span id="systemEvents">0</span><span id="systemModel">READY</span><span id="systemTracker">READY</span><span id="systemMap">OFFLINE</span><span id="evidenceSignal"></span><span id="evidenceValue"></span><span id="evidencePersistence"></span><span id="evidenceCoverage"></span><span id="evidenceMovement"></span><span id="evidenceScore"></span><span id="evidenceConfidence"></span><span id="temperatureAnomaly"></span><span id="windAnomaly"></span><span id="interpretation"></span><span id="forecast"></span><span id="start"></span><span id="latest"></span><span id="movement"></span><span id="rainfall"></span><span id="locationQueryMirror"></span><span id="compoundStatus">N/A</span><span id="priorityStatus">N/A</span><span id="severityForecast"></span><span id="evolutionGraph"></span><span id="locationConditionMirror"></span></section>
 
   <div id="toast" class="toast"></div>
-
-  <!-- 5 KM Alert Radius Details Panel -->
-  <section id="alertPanel" class="alertPanel" hidden>
-    <div class="alertHeader">
-      <div>
-        <div class="eyebrow">EMERGENCY ALERT ZONE</div>
-        <h2>5 KM ALERT BUFFER GENERATED</h2>
-      </div>
-      <button id="closeAlertBtn" class="iconButton" aria-label="Close alert">&times;</button>
-    </div>
-    <p class="alertNote">Note: 5 km alert radius is an emergency operational response buffer around the centroid, distinct from the 5 km downscaled model grid.</p>
-    <div class="alertDetails">
-      <div><span>ALERT ID</span><b id="alertId"></b></div>
-      <div><span>EVENT</span><b id="alertEvent"></b></div>
-      <div><span>AUTHORITATIVE SEVERITY</span><b id="alertSeverity"></b></div>
-      <div><span>BUFFER RADIUS</span><b id="alertRadius">5.0 km</b></div>
-      <div><span>CENTROID POSITION</span><b id="alertPosition"></b></div>
-      <div><span>DATA KIND</span><b id="alertDataKind"></b></div>
-      <div class="alertAction"><span>RECOMMENDED DISASTER MANAGEMENT ACTION</span><b id="alertAction"></b></div>
-    </div>
-  </section>
+  <section id="alertPanel" class="alertPanel" hidden><div class="alertHeader"><div><span class="eyebrow">DECISION-SUPPORT ALERT</span><h2>5 KM ALERT READY</h2></div><button id="closeAlertBtn" class="iconButton" aria-label="Close alert">×</button></div><div class="alertDetails"><div><span>ALERT ID</span><b id="alertId"></b></div><div><span>EVENT</span><b id="alertEvent"></b></div><div><span>SEVERITY</span><b id="alertSeverity"></b></div><div><span>RADIUS</span><b id="alertRadius">5 km</b></div><div><span>AFFECTED AREA</span><b id="alertArea"></b></div><div><span>VALID WINDOW</span><b id="alertValidWindow"></b></div><div><span>CURRENT POSITION</span><b id="alertPosition"></b></div><div><span>GENERATED</span><b id="alertTimestamp"></b></div><div class="alertAction"><span>RECOMMENDATION</span><b id="alertAction"></b></div></div></section>
 </main>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=20260910-3"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="app.js"></script>
 </body>
 </html>

@@ -1,2 +1,9 @@
-"""Vercel ASGI entrypoint for the real SIH FastAPI application."""
-from backend.main import app
+import sys
+from pathlib import Path
+
+BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
+sys.path.insert(0, str(BACKEND_DIR))
+
+from main import app
+
+__all__ = ["app"]

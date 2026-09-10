@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from statistics import median
 from typing import Any, Iterable
 
+from baseline import reference_values, z_score
+
 THRESHOLDS = {
     "temperature_reference_c": 30.0,
     "temperature_high_delta_c": 5.0,
@@ -54,8 +56,20 @@ def calculate_wind_anomaly(value: Any) -> float | None:
     return wind - THRESHOLDS["wind_reference_kmh"]
 
 
-def calculate_anomaly_score(point: dict[str, Any]) -> tuple[float, str, str, float | None]:
-    """Return score, type, primary metric, and primary anomaly value."""
+def calculate_anomaly_score(point: dict[str, Any]) -> tuple[float, str, str, float | None, dict[str, float | None]]:
+    """Return composite score, event type, dominant metric, deviation, and z-scores."""
+    baseline = reference_values(float(point.get("lat", 0)), float(point.get("lon", 0)), point.get("time"))
+    temperature_z = z_score(_number(point.get("temperature")), float(baseline["temperature"]), float(baseline["temperature_std"]))
+    rainfall_z = z_score(_number(point.get("rainfall")), float(baseline["rainfall"]), float(baseline["rainfall_std"]))
+    wind_z = z_score(_number(point.get("wind_speed")), float(baseline["wind_speed"]), float(baseline["wind_speed_std"]))
+    z_scores = {"temperature": temperature_z, "rainfall": rainfall_z, "wind": wind_z}
+    weighted = {
+        "temperature": max(0.0, abs(temperature_z or 0)) * 0.35,
+        "rainfall": max(0.0, rainfall_z or 0) * 0.40,
+        "wind": max(0.0, wind_z or 0) * 0.25,
+    }
+    dominant = max(weighted, key=weighted.get)
+    composite = sum(weighted.values())
     candidates: list[tuple[float, str, str, float | None]] = []
     temperature = _number(point.get("temperature"))
     if temperature is not None:
@@ -74,9 +88,10 @@ def calculate_anomaly_score(point: dict[str, Any]) -> tuple[float, str, str, flo
         anomaly = calculate_wind_anomaly(wind)
         candidates.append((min(100.0, max(0.0, wind) / 80 * 100), "Extreme wind", "Wind anomaly", anomaly))
     if not candidates:
-        return 0.0, "Weather observation", "Weather anomaly", None
-    score, event_type, metric, anomaly = max(candidates, key=lambda item: item[0])
-    return round(score, 2), event_type, metric, round(anomaly, 2) if anomaly is not None else None
+        return 0.0, "Weather observation", "Weather anomaly", None, z_scores
+    _, event_type, metric, anomaly = max(candidates, key=lambda item: item[0])
+    score = min(100.0, composite / 3.0 * 100.0)
+    return round(score, 2), event_type, metric, round(anomaly, 2) if anomaly is not None else None, z_scores
 
 
 def classify_severity(score: float) -> str:
@@ -124,8 +139,8 @@ class StatisticalAnomalyModel(AnomalyModel):
                 "rainfall": rainfall[index] if index < len(rainfall) else None,
                 "wind_speed": wind[index] if index < len(wind) and _number(wind[index]) is not None else None,
             }
-            score, event_type, metric, anomaly = calculate_anomaly_score(point)
-            point.update({"anomaly_score": score, "severity": classify_severity(score), "event_type": event_type, "primary_metric": metric, "primary_anomaly": anomaly})
+            score, event_type, metric, anomaly, z_scores = calculate_anomaly_score(point)
+            point.update({"anomaly_score": score, "severity": classify_severity(score), "event_type": event_type, "primary_metric": metric, "primary_anomaly": anomaly, "z_scores": z_scores, "baseline_values": reference_values(latitude, longitude, timestamp)})
             points.append(point)
         sampled = points[::24] or points[:1]
         for point in sampled:
@@ -138,7 +153,7 @@ class StatisticalAnomalyModel(AnomalyModel):
             "anomaly_score": score,
             "severity": classify_severity(score),
             "confidence": calculate_detection_confidence(points, score),
-            "baseline": "statistical reference thresholds",
+            "baseline": "Prototype climatological baseline",
         }
 
 
