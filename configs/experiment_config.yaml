@@ -1,0 +1,75 @@
+# SIH 26078: Experiment Configuration & Model Provenance Tracking
+experiment_id: "SIH26078-EXP-2026-V2"
+timestamp: "2026-09-10T09:30:00Z"
+random_seed: 42
+data_mode: "LIVE"  # LIVE | RESEARCH | DEMO
+
+meteorological_dataset:
+  providers:
+    operational_live: "Open-Meteo Public GFS/ECMWF Blend"
+    ensemble_adapter: "NEPS-G (NCMRWF 12km 23-member EPS)"
+    deterministic_adapter: "NCUM (NCMRWF Global Model)"
+    reanalysis_baseline: "ERA5 0.25deg (ECMWF) / IMDAA 12km (NCMRWF)"
+  variables:
+    - "temperature_2m"
+    - "precipitation"
+    - "wind_speed_10m"
+    - "wind_direction_10m"
+    - "surface_pressure"
+    - "relative_humidity_2m"
+    - "geopotential_500hPa"
+  spatial_domain:
+    region: "South Asia / India"
+    lat_min: 6.0
+    lat_max: 38.0
+    lon_min: 65.0
+    lon_max: 100.0
+  temporal_horizons_hours: [24, 48, 72, 96]
+
+climatology:
+  method: "Day-of-Year (DOY) Rolling Climatology"
+  reference_period: "1991-2020 30-Year Normal"
+  percentiles: [10, 50, 90, 95, 99]
+
+extreme_forecast_index:
+  method: "ECMWF Integral Discrete Quadrature"
+  quadrature_steps: 100
+  tail_metric: "Shift of Tails (SOT-90)"
+
+spatiotemporal_gnn:
+  architecture: "SpatioTemporalAnomalyGNN"
+  mesh_subdivision_level: 2
+  mesh_nodes: 162
+  in_channels: 10
+  hidden_dim: 64
+  temporal_layers: 1
+  optimizer: "AdamW"
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  loss: "BCELoss + 0.5 * TrajectoryMSE"
+  leakage_protection: "Event-Disjoint Split (70/15/15)"
+  checkpoint_path: "models/checkpoints/spatiotemporal_gnn_checkpoint.pt"
+
+conditional_diffusion_downscaling:
+  architecture: "ConditionalWeatherDiffusion"
+  coarse_resolution_km: 12.0
+  target_resolution_km: 5.0
+  diffusion_steps: 50
+  beta_schedule: "linear (1e-4 to 0.02)"
+  conditioning_features:
+    - "upscaled_coarse_field"
+    - "spatial_anomaly_mask"
+    - "elevation"
+    - "slope"
+    - "land_sea_mask"
+  physics_loss_weights:
+    lambda_physics: 0.1
+    lambda_extreme: 0.2
+    extreme_quantile: 0.95
+
+impact_zone:
+  grid_resolution_km: 5.0
+  alert_radius_distinction: "Buffer radius (km) != model resolution"
+  exposure_adapters:
+    - "population_density_census_proxy"
+    - "critical_substations_transport_corridors"

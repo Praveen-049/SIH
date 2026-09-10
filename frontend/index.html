@@ -3,23 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Weather Anomaly Intelligence | SIH26078</title>
+<title>Weather Anomaly Intelligence | SIH26078 Scientific Architecture</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
   <div>
-      <div class="brand">WEATHER ANOMALY INTELLIGENCE</div>
-    <div class="sub">SIH26078 · Spatio-Temporal Extreme Weather Anomaly Tracking</div>
+    <div class="brand">WEATHER ANOMALY INTELLIGENCE</div>
+    <div class="sub">SIH26078 · AI-Driven Spatio-Temporal Tracking of Extreme Weather Anomalies in Medium-Range Forecasts</div>
   </div>
-  <div id="apiStatus" class="status">● CONNECTING</div>
+  <div class="headerRight">
+    <div class="modeControl">
+      <label for="modeSelector">DATA MODE:</label>
+      <select id="modeSelector">
+        <option value="LIVE" selected>LIVE (Open-Meteo NWP)</option>
+        <option value="RESEARCH">RESEARCH (EPS / Reanalysis)</option>
+        <option value="DEMO">DEMO (Simulated Fixtures)</option>
+      </select>
+    </div>
+    <div id="apiStatus" class="status">● CONNECTING</div>
+  </div>
 </header>
 
 <main>
+  <!-- Scientific Subsystem Status Bar -->
+  <section class="modelStatusBar">
+    <div class="statusBarHeader">
+      <span>SUBSYSTEM READINESS & PROVENANCE METADATA</span>
+      <button id="toggleStatusDetails" class="miniBtn">VIEW FULL MATRIX</button>
+    </div>
+    <div class="statusPills" id="statusPills">
+      <div class="pill" id="pillNwp"><span>NWP DATA:</span> <b>CHECKING...</b></div>
+      <div class="pill" id="pillClim"><span>CLIMATOLOGY:</span> <b>DOY ROLLING</b></div>
+      <div class="pill" id="pillEfi"><span>EFI ENGINE:</span> <b>ECMWF QUAD</b></div>
+      <div class="pill" id="pillGnn"><span>GNN:</span> <b>TRAINED (PROTOTYPE)</b></div>
+      <div class="pill" id="pillDiff"><span>DIFFUSION 5KM:</span> <b>UNTRAINED (READY)</b></div>
+      <div class="pill" id="pillPhys"><span>PHYSICS LOSS:</span> <b>VALIDATED</b></div>
+      <div class="pill" id="pillDevice"><span>COMPUTE:</span> <b>CPU</b></div>
+    </div>
+  </section>
+
   <section class="toolbar">
     <div>
-      <label>Forecast horizon</label>
+      <label for="horizon">Forecast horizon</label>
       <select id="horizon">
         <option value="24">+24 HOURS</option>
         <option value="48">+48 HOURS</option>
@@ -28,29 +55,44 @@
       </select>
     </div>
     <div>
-      <label>Weather event</label>
+      <label for="eventSelect">Tracked weather event</label>
       <select id="eventSelect"></select>
     </div>
+    <div class="layerToggles">
+      <label>Map layers</label>
+      <div class="toggleGroup">
+        <label class="toggleLabel"><input type="checkbox" id="toggleTrack" checked> Geodesic Track</label>
+        <label class="toggleLabel"><input type="checkbox" id="toggleImpact" checked> 5 km Grid Footprint</label>
+        <label class="toggleLabel"><input type="checkbox" id="toggleAlertRadius" checked> Alert Buffer</label>
+      </div>
+    </div>
     <button id="trackBtn">SHOW FORECAST PATH</button>
-      <button id="alertBtn" class="secondary">GENERATE 5 KM ALERT RADIUS</button>
+    <button id="downscalingBtn" class="secondary">12 KM → 5 KM DOWNSCALING</button>
+    <button id="validationBtn" class="secondary">HISTORICAL VALIDATION</button>
+    <button id="alertBtn" class="primaryAlert">GENERATE 5 KM ALERT RADIUS</button>
   </section>
 
-  <div class="demoBanner"><span id="dataModeBadge">LIVE DATA</span><b id="dataModeText">Open-Meteo point forecast with statistical anomaly detection</b><small id="lastUpdate">Updated: N/A</small></div>
+  <div class="demoBanner">
+    <span id="dataModeBadge">LIVE DATA</span>
+    <b id="dataModeText">Open-Meteo NWP forecast with Day-of-Year climatology & Extreme Forecast Index</b>
+    <small id="lastUpdate">Updated: N/A</small>
+  </div>
 
   <section class="grid">
     <div class="mapCard">
       <div id="map"></div>
       <div class="legend">
-        <span><i class="dot severe"></i> Severe</span>
-        <span><i class="dot high"></i> High</span>
-        <span><i class="dot moderate"></i> Moderate</span>
+        <span><i class="dot severe"></i> Severe (Score ≥ 75)</span>
+        <span><i class="dot high"></i> High (Score ≥ 55)</span>
+        <span><i class="dot moderate"></i> Moderate (Score ≥ 35)</span>
+        <span><i class="box grid5km"></i> 5 km High-Res Grid Field</span>
       </div>
     </div>
 
     <aside>
       <div class="card">
-        <div class="eyebrow">ACTIVE ANOMALIES</div>
-        <div class="activeSummary"><b id="totalCount">0</b><span>DETECTED EVENTS</span></div>
+        <div class="eyebrow">ACTIVE ANOMALIES & SEVERITY</div>
+        <div class="activeSummary"><b id="totalCount">0</b><span>DETECTED WEATHER EVENTS</span></div>
         <div class="riskGrid">
           <div><b id="severeCount">0</b><span>SEVERE</span></div>
           <div><b id="highCount">0</b><span>HIGH</span></div>
@@ -59,13 +101,14 @@
       </div>
 
       <div class="card systemCard">
-        <div class="eyebrow">SYSTEM STATUS</div>
+        <div class="eyebrow">SYSTEM & METEOROLOGICAL ENGINES</div>
         <div class="systemRows">
-          <div><span>API</span><b id="systemApi">CONNECTING</b></div>
-          <div><span>DATA</span><b id="systemData">LOADING</b></div>
-          <div><span>EVENTS</span><b id="systemEvents">0</b></div>
-          <div><span>MODEL</span><b id="systemModel">READY</b></div>
-          <div><span>MAP</span><b id="systemMap">OFFLINE</b></div>
+          <div><span>API STATUS</span><b id="systemApi">CONNECTING</b></div>
+          <div><span>DATA SOURCE</span><b id="systemData">LOADING</b></div>
+          <div><span>ACTIVE EVENTS</span><b id="systemEvents">0</b></div>
+          <div><span>CLIMATOLOGY</span><b id="systemClim">DOY BASELINE</b></div>
+          <div><span>SEVERITY ENGINE</span><b id="systemSeverity">AUTHORITATIVE</b></div>
+          <div><span>SPHERICAL GNN</span><b id="systemGnn">READY</b></div>
         </div>
       </div>
 
@@ -73,46 +116,48 @@
         <div class="row"><span>SELECTED EVENT</span><b id="riskBadge">HIGH RISK</b></div>
         <h2 id="eventTitle">EVENT #10</h2>
         <div class="facts">
-          <div><span>TYPE</span><b id="eventType"></b></div>
-          <div><span>FORECAST</span><b id="forecast"></b></div>
-          <div><span>START</span><b id="start"></b></div>
-          <div><span>LATEST</span><b id="latest"></b></div>
-          <div><span>PATH DIRECTION</span><b id="movement"></b></div>
-          <div><span>PATH SPEED</span><b id="speed"></b></div>
-          <div><span>PEAK RAINFALL</span><b id="rainfall"></b></div>
+          <div><span>METEOROLOGICAL TYPE</span><b id="eventType"></b></div>
+          <div><span>FORECAST RANGE</span><b id="forecast"></b></div>
+          <div><span>ORIGIN (START)</span><b id="start"></b></div>
+          <div><span>CURRENT CENTROID</span><b id="latest"></b></div>
+          <div><span>GEODESIC BEARING</span><b id="bearing"></b></div>
+          <div><span>PROPAGATION SPEED</span><b id="speed"></b></div>
+          <div><span>PEAK PRECIPITATION</span><b id="rainfall"></b></div>
           <div><span>MAX TEMP ANOMALY</span><b id="temperatureAnomaly"></b></div>
           <div><span>MAX WIND ANOMALY</span><b id="windAnomaly"></b></div>
-          <div class="score"><span>STATISTICAL ANOMALY SCORE</span><b id="score"></b></div>
+          <div><span>EXTREME FORECAST INDEX (EFI)</span><b id="efiValue">+0.00</b></div>
+          <div class="score"><span>AUTHORITATIVE SEVERITY SCORE</span><b id="score"></b></div>
         </div>
       </div>
 
       <div class="card">
-        <div class="eyebrow">STATISTICAL INTERPRETATION</div>
+        <div class="eyebrow">SCIENTIFIC INTERPRETATION & EXPLAINABILITY</div>
         <p id="interpretation"></p>
-        <div class="confidence"><span>HEURISTIC EVIDENCE SCORE</span><b id="confidenceText"></b></div>
+        <div class="confidence"><span>EXCEEDANCE PROBABILITY / EVIDENCE</span><b id="confidenceText"></b></div>
         <div class="bar"><i id="confidenceBar"></i></div>
       </div>
 
       <div class="card evidenceCard">
-        <div class="eyebrow">ANOMALY EVIDENCE</div>
+        <div class="eyebrow">SCIENTIFIC ANOMALY EVIDENCE</div>
         <div class="evidenceGrid">
           <div><span>PRIMARY SIGNAL</span><b id="evidenceSignal"></b></div>
-          <div><span>OBSERVED VALUE</span><b id="evidenceValue"></b></div>
+          <div><span>OBSERVED INTENSITY</span><b id="evidenceValue"></b></div>
           <div><span>PERSISTENCE</span><b id="evidencePersistence"></b></div>
-          <div><span>SPATIAL COVERAGE</span><b id="evidenceCoverage"></b></div>
-          <div><span>MOVEMENT</span><b id="evidenceMovement"></b></div>
-          <div><span>ANOMALY SCORE</span><b id="evidenceScore"></b></div>
-          <div><span>HEURISTIC EVIDENCE SCORE</span><b id="evidenceConfidence"></b></div>
+          <div><span>AFFECTED AREA (5 KM GRID)</span><b id="evidenceCoverage"></b></div>
+          <div><span>MOTION VECTOR</span><b id="evidenceMovement"></b></div>
+          <div><span>EFI INDEX</span><b id="evidenceEfi">N/A</b></div>
+          <div><span>EXCEEDANCE PROBABILITY</span><b id="evidenceConfidence"></b></div>
         </div>
-        <div class="baseline" id="baselineText">Baseline: statistical reference</div>
+        <div class="baseline" id="baselineText">Baseline: Day-of-Year Rolling Climatology</div>
         <p id="evidenceExplanation" class="evidenceExplanation"></p>
       </div>
 
       <div class="card">
-        <div class="eyebrow">IMPACT ASSESSMENT</div>
+        <div class="eyebrow">5 KM HIGH-RESOLUTION IMPACT & EXPOSURE</div>
         <div class="impact">
-          <div><span>AFFECTED AREA</span><b id="area"></b></div>
-          <div><span>RISK</span><b id="impactRisk"></b></div>
+          <div><span>AFFECTED EXTENT (KM²)</span><b id="area"></b></div>
+          <div><span>EST. POPULATION EXPOSURE</span><b id="popExposure">N/A</b></div>
+          <div><span>MULTI-FACTORIAL RISK</span><b id="impactRisk"></b></div>
         </div>
         <div id="impactTags" class="tags"></div>
       </div>
@@ -121,26 +166,104 @@
 
   <section class="lower">
     <div class="card">
-      <div class="sectionTitle">FORECAST EVOLUTION</div>
+      <div class="sectionTitle">SPATIO-TEMPORAL FORECAST EVOLUTION (GEODESIC TRAJECTORY)</div>
       <div id="timeline" class="timeline"></div>
     </div>
     <div class="card">
-      <div class="sectionTitle">WHY IS THIS ANOMALOUS?</div>
+      <div class="sectionTitle">SCIENTIFIC EVIDENCE & PHYSICAL REASONING</div>
       <ul id="whyList"></ul>
     </div>
   </section>
 
+  <!-- Downscaling Comparison Modal -->
+  <div id="downscalingModal" class="modal" hidden>
+    <div class="modalContent">
+      <div class="modalHeader">
+        <div>
+          <div class="eyebrow">CONDITIONAL DIFFUSION EVALUATION (SPECTRAL SMOOTHING)</div>
+          <h2>12 KM COARSE NWP → 5 KM HIGH-RESOLUTION DOWNSCALING</h2>
+        </div>
+        <button id="closeDownscalingBtn" class="iconButton">&times;</button>
+      </div>
+      <p class="modalDesc">
+        Addresses the SIH spectral-smoothing dilemma. Compares coarse 12 km NWP input against standard bicubic interpolation
+        and the Conditional Diffusion Model with physics-informed conservation and extreme-tail preservation losses.
+      </p>
+      <div class="compareGrid">
+        <div class="compareCol">
+          <h3>COARSE INPUT (12 KM)</h3>
+          <div class="metricBadge">Resolution: 12.0 km</div>
+          <div class="fieldBox" id="boxCoarse"></div>
+          <div class="statRow"><span>Max Intensity:</span> <b id="statCoarseMax">--</b></div>
+          <div class="statRow"><span>Upper 95th:</span> <b id="statCoarseP95">--</b></div>
+        </div>
+        <div class="compareCol">
+          <h3>BASELINE BICUBIC (5 KM)</h3>
+          <div class="metricBadge warning">Smoothed Extremes</div>
+          <div class="fieldBox" id="boxBicubic"></div>
+          <div class="statRow"><span>RMSE vs Truth:</span> <b id="statBicubicRmse">--</b></div>
+          <div class="statRow"><span>Peak Underestimation:</span> <b id="statBicubicPeak" class="negative">--</b></div>
+        </div>
+        <div class="compareCol highlight">
+          <h3>CONDITIONAL DIFFUSION (5 KM)</h3>
+          <div class="metricBadge success">Tail-Preserving Model</div>
+          <div class="fieldBox" id="boxDiffusion"></div>
+          <div class="statRow"><span>RMSE vs Truth:</span> <b id="statDiffRmse">--</b></div>
+          <div class="statRow"><span>Tail Preservation:</span> <b id="statDiffPeak" class="positive">Preserved</b></div>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <span id="spectralResult">Spectral Smoothing Addressed: True</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historical Validation Modal -->
+  <div id="validationModal" class="modal" hidden>
+    <div class="modalContent">
+      <div class="modalHeader">
+        <div>
+          <div class="eyebrow">HISTORICAL VALIDATION FRAMEWORK</div>
+          <h2 id="valTitle">CYCLONE BIPARJOY TRACK SKILL BENCHMARK</h2>
+        </div>
+        <button id="closeValidationBtn" class="iconButton">&times;</button>
+      </div>
+      <p class="modalDesc">
+        Validates forecast tracks against actual IMD Best Track and reanalysis observations without fabricating metrics.
+      </p>
+      <div class="valGrid">
+        <div class="valCard"><span>MEAN CENTROID ERROR</span><b id="valCentroidErr">--</b></div>
+        <div class="valCard"><span>MAX CENTROID ERROR</span><b id="valMaxCentroidErr">--</b></div>
+        <div class="valCard"><span>INTENSITY RMSE</span><b id="valIntensityRmse">--</b></div>
+        <div class="valCard"><span>FRAMEWORK STATUS</span><b id="valStatus" class="highlightText">--</b></div>
+      </div>
+      <div class="provBox">
+        <span>PROVENANCE:</span>
+        <code id="valProvenance">--</code>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
+
+  <!-- 5 KM Alert Radius Details Panel -->
   <section id="alertPanel" class="alertPanel" hidden>
-    <div class="alertHeader"><div><div class="eyebrow">ALERT-RADIUS VISUALIZATION</div><h2>5 KM ALERT RADIUS GENERATED</h2></div><button id="closeAlertBtn" class="iconButton" aria-label="Close alert">×</button></div>
+    <div class="alertHeader">
+      <div>
+        <div class="eyebrow">EMERGENCY ALERT ZONE</div>
+        <h2>5 KM ALERT BUFFER GENERATED</h2>
+      </div>
+      <button id="closeAlertBtn" class="iconButton" aria-label="Close alert">&times;</button>
+    </div>
+    <p class="alertNote">Note: 5 km alert radius is an emergency operational response buffer around the centroid, distinct from the 5 km downscaled model grid.</p>
     <div class="alertDetails">
       <div><span>ALERT ID</span><b id="alertId"></b></div>
       <div><span>EVENT</span><b id="alertEvent"></b></div>
-      <div><span>SEVERITY</span><b id="alertSeverity"></b></div>
-      <div><span>RADIUS</span><b id="alertRadius">5 km</b></div>
-      <div><span>CURRENT POSITION</span><b id="alertPosition"></b></div>
-      <div><span>TIMESTAMP</span><b id="alertTimestamp"></b></div>
-      <div class="alertAction"><span>RECOMMENDED ACTION</span><b id="alertAction"></b></div>
+      <div><span>AUTHORITATIVE SEVERITY</span><b id="alertSeverity"></b></div>
+      <div><span>BUFFER RADIUS</span><b id="alertRadius">5.0 km</b></div>
+      <div><span>CENTROID POSITION</span><b id="alertPosition"></b></div>
+      <div><span>DATA KIND</span><b id="alertDataKind"></b></div>
+      <div class="alertAction"><span>RECOMMENDED DISASTER MANAGEMENT ACTION</span><b id="alertAction"></b></div>
     </div>
   </section>
 </main>
