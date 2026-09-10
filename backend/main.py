@@ -4,12 +4,26 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import json
+import math
 from pydantic import BaseModel, Field, ValidationError
 
-from anomaly_detector import StatisticalAnomalyModel, calculate_detection_confidence
-from baseline import BASELINE_LABEL, reference_values, z_score
-from tracker import summarize, uncertainty
-from weather_service import WeatherDataError, geocode_location, get_forecast
+try:  # Package imports for Vercel and repository-root execution.
+    from .anomaly_detector import StatisticalAnomalyModel, calculate_detection_confidence
+    from .baseline import BASELINE_LABEL, reference_values, z_score
+    from .tracker import summarize, uncertainty
+    from .weather_service import WeatherDataError, geocode_location, get_forecast
+except ImportError:  # Direct `uvicorn main:app` from the backend directory.
+    from anomaly_detector import StatisticalAnomalyModel, calculate_detection_confidence
+    from baseline import BASELINE_LABEL, reference_values, z_score
+    from tracker import summarize, uncertainty
+    from weather_service import WeatherDataError, geocode_location, get_forecast
+
+def _geodesic_distance_km(start: dict, latest: dict) -> float:
+    """Great-circle distance for the public coordinate-dictionary contract."""
+    lat1, lon1 = math.radians(float(start["lat"])), math.radians(float(start["lon"]))
+    lat2, lon2 = math.radians(float(latest["lat"])), math.radians(float(latest["lon"]))
+    a = math.sin((lat2 - lat1) / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2
+    return 6371.0088 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 BASE = Path(__file__).resolve().parent
 DATA = json.loads((BASE / "events.json").read_text(encoding="utf-8"))

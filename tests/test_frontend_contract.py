@@ -15,19 +15,15 @@ class FrontendContractTests(unittest.TestCase):
         duplicates = {item for item in ids if ids.count(item) > 1}
         self.assertFalse(duplicates, f"Duplicate DOM IDs: {sorted(duplicates)}")
 
-    def test_analyze_event_panel_contract(self):
+    def test_event_analysis_contract(self):
         required = {
-            "analyzeBtn", "analyzePanel", "analyzePanelTitle", "analyzeSummary",
-            "anlzTempClim", "anlzPrecipClim", "anlzWindClim", "anlzClimMethod",
-            "anlzZTemp", "anlzZPrecip", "anlzZWind", "anlzZMax", "anlzEfi",
-            "anlzEfiInterp", "anlzEfiProv", "anlzSevBand", "anlzSevScore",
-            "anlzSevExceed", "anlzSubClim", "anlzSubAnomaly", "anlzSubEfi",
-            "anlzSubGnn", "anlzSubDiff", "anlzSubPhys",
+            "analyzeBtn", "analysisText", "whyList", "baselineText", "eventSelect",
+            "trackingConfidence", "responseRisk", "timeline",
         }
         ids = set(re.findall(r'id="([^\"]+)"', INDEX_HTML))
         self.assertFalse(required - ids, f"Missing analysis IDs: {sorted(required - ids)}")
-        self.assertIn("/api/analyze-event", APP_JS)
-        self.assertIn("handleAnalyzeEvent", APP_JS)
+        self.assertIn("/analysis", APP_JS)
+        self.assertIn("analyzeEvent", APP_JS)
 
 
 if __name__ == "__main__":

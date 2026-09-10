@@ -9,7 +9,10 @@ from abc import ABC, abstractmethod
 from statistics import median
 from typing import Any, Iterable
 
-from baseline import reference_values, z_score
+try:
+    from .baseline import reference_values, z_score
+except ImportError:
+    from baseline import reference_values, z_score
 
 THRESHOLDS = {
     "temperature_reference_c": 30.0,
