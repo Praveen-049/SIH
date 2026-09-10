@@ -154,3 +154,23 @@ ul{margin:0;padding-left:18px;color:#b7c9db;font-size:11px;line-height:1.8}
 
 @media(max-width:1050px){.grid,.lower,.compareGrid{grid-template-columns:1fr}.toolbar{flex-wrap:wrap}.toolbar button{margin-left:0}.mapCard,#map{min-height:500px;height:500px}}
 @media(max-width:580px){.toolbar>div,.toolbar button{width:100%}.demoBanner{align-items:flex-start;flex-direction:column;gap:6px}.headerRight{width:100%;justify-content:space-between}}
+
+/* Accent button (ANALYZE EVENT) */
+button.accent{background:#0d3d4a;border-color:#1a8fa0;color:#7ee8f8}
+button.accent:hover{background:#114f60;filter:brightness(1.12)}
+
+/* Analyze Event Panel */
+.analyzePanel{background:#071d2e;border:1px solid #1a8fa0;border-left:4px solid #7ee8f8;border-radius:12px;padding:22px;margin-top:16px;box-shadow:0 8px 30px #020d1acc}
+.analyzeHeader{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.analyzeHeader h2{font-size:17px;margin:6px 0 0;color:#d4f5ff}
+.analyzeHeader h2 span{color:#7ee8f8}
+.analyzeNote{font-size:11px;color:#93cfe8;line-height:1.55;margin:8px 0 16px;padding:10px 12px;background:#0b2535;border:1px solid #1c4a61;border-radius:6px}
+.analyzeGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.analyzeCard{background:#091d30;border:1px solid #1b4160;border-radius:9px;padding:14px}
+.analyzeCard.wide{grid-column:1 / -1}
+.analyzeRows{margin-top:8px}
+.analyzeRows div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #16354f}
+.analyzeRows div:last-child{border-bottom:none}
+.analyzeRows span{font-size:9px;letter-spacing:.8px;color:#7893af}
+.analyzeRows b{font-size:11px;color:#d4f5ff;text-align:right;max-width:60%;overflow-wrap:anywhere}
+

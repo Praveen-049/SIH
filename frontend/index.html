@@ -69,6 +69,7 @@
     <button id="trackBtn">SHOW FORECAST PATH</button>
     <button id="downscalingBtn" class="secondary">12 KM → 5 KM DOWNSCALING</button>
     <button id="validationBtn" class="secondary">HISTORICAL VALIDATION</button>
+    <button id="analyzeBtn" class="secondary accent">ANALYZE EVENT</button>
     <button id="alertBtn" class="primaryAlert">GENERATE 5 KM ALERT RADIUS</button>
   </section>
 
@@ -170,8 +171,72 @@
       <div id="timeline" class="timeline"></div>
     </div>
     <div class="card">
-      <div class="sectionTitle">SCIENTIFIC EVIDENCE & PHYSICAL REASONING</div>
+      <div class="sectionTitle">SCIENTIFIC EVIDENCE &amp; PHYSICAL REASONING</div>
       <ul id="whyList"></ul>
+    </div>
+  </section>
+
+  <!-- Analyze Event Result Panel -->
+  <section id="analyzePanel" class="analyzePanel" hidden>
+    <div class="analyzeHeader">
+      <div>
+        <div class="eyebrow">SCIENTIFIC DEEP-ANALYSIS REPORT</div>
+        <h2>EVENT ANALYSIS: <span id="analyzePanelTitle">—</span></h2>
+      </div>
+      <button id="closeAnalyzeBtn" class="iconButton" aria-label="Close analysis">&times;</button>
+    </div>
+    <p class="analyzeNote" id="analyzeSummary"></p>
+    <div class="analyzeGrid">
+      <!-- Climatology -->
+      <div class="analyzeCard">
+        <div class="eyebrow">CLIMATOLOGICAL BASELINE (DOY)</div>
+        <div class="analyzeRows">
+          <div><span>TEMP MEAN / STD</span><b id="anlzTempClim">—</b></div>
+          <div><span>PRECIP MEAN / STD</span><b id="anlzPrecipClim">—</b></div>
+          <div><span>WIND MEAN / STD</span><b id="anlzWindClim">—</b></div>
+          <div><span>METHOD</span><b id="anlzClimMethod">DOY Rolling</b></div>
+        </div>
+      </div>
+      <!-- Anomaly Z-scores -->
+      <div class="analyzeCard">
+        <div class="eyebrow">ANOMALY Z-SCORES</div>
+        <div class="analyzeRows">
+          <div><span>TEMPERATURE σ</span><b id="anlzZTemp">—</b></div>
+          <div><span>PRECIPITATION σ</span><b id="anlzZPrecip">—</b></div>
+          <div><span>WIND σ</span><b id="anlzZWind">—</b></div>
+          <div><span>COMPOSITE MAX σ</span><b id="anlzZMax">—</b></div>
+        </div>
+      </div>
+      <!-- EFI -->
+      <div class="analyzeCard">
+        <div class="eyebrow">EXTREME FORECAST INDEX (EFI)</div>
+        <div class="analyzeRows">
+          <div><span>EFI VALUE</span><b id="anlzEfi">—</b></div>
+          <div><span>INTERPRETATION</span><b id="anlzEfiInterp">—</b></div>
+          <div><span>PROVENANCE</span><b id="anlzEfiProv">—</b></div>
+        </div>
+      </div>
+      <!-- Severity -->
+      <div class="analyzeCard">
+        <div class="eyebrow">AUTHORITATIVE SEVERITY</div>
+        <div class="analyzeRows">
+          <div><span>SEVERITY BAND</span><b id="anlzSevBand">—</b></div>
+          <div><span>MULTI-FACTORIAL SCORE</span><b id="anlzSevScore">—</b></div>
+          <div><span>EXCEEDANCE PROB.</span><b id="anlzSevExceed">—</b></div>
+        </div>
+      </div>
+      <!-- Subsystem Readiness -->
+      <div class="analyzeCard wide">
+        <div class="eyebrow">SUBSYSTEM READINESS MATRIX</div>
+        <div class="analyzeRows">
+          <div><span>CLIMATOLOGY</span><b id="anlzSubClim">—</b></div>
+          <div><span>ANOMALY ENGINE</span><b id="anlzSubAnomaly">—</b></div>
+          <div><span>EFI ENGINE</span><b id="anlzSubEfi">—</b></div>
+          <div><span>SPATIO-TEMPORAL GNN</span><b id="anlzSubGnn">—</b></div>
+          <div><span>CONDITIONAL DIFFUSION</span><b id="anlzSubDiff">—</b></div>
+          <div><span>PHYSICS CONSTRAINTS</span><b id="anlzSubPhys">—</b></div>
+        </div>
+      </div>
     </div>
   </section>
 

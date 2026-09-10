@@ -123,6 +123,11 @@ class AlertRequest(BaseModel):
     )
 
 
+class AnalyzeEventRequest(BaseModel):
+    event_id: Any = Field(..., description="Event identifier to analyze")
+    mode: str | None = Field(None, description="Data mode: LIVE, RESEARCH, or DEMO")
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -794,4 +799,128 @@ def create_alert(payload: AlertRequest, mode: str | None = Query(None)):
         "alert_radius_note": "Operational buffer radius (distinct from 5 km model downscaled grid resolution)",
         "generated_at": _now(),
         "status": "READY",
+    }
+
+
+@app.post("/api/analyze-event")
+def analyze_event(payload: AnalyzeEventRequest):
+    """Deep scientific analysis of a single weather event across all subsystems.
+
+    Runs the event through:
+    - Day-of-Year climatological baseline
+    - Standardized anomaly Z-scores (temperature, precipitation, wind)
+    - Extreme Forecast Index (EFI) calculation
+    - Authoritative multi-factorial severity evaluation
+    - 5 km impact zone generation
+    - Subsystem readiness matrix
+    """
+    active_mode = _get_active_mode(payload.mode)
+    event = _find_event(payload.event_id, active_mode)
+    if not event:
+        raise HTTPException(status_code=404, detail=f"Event {payload.event_id} not found in mode {active_mode}")
+
+    doy = datetime.now(timezone.utc).timetuple().tm_yday
+    lat = float(event["latest"]["lat"])
+    lon = float(event["latest"]["lon"])
+
+    # --- Climatological Baseline ---
+    t_baseline = CLIMATOLOGY.get_baseline("temperature_2m", lat, lon, doy)
+    p_baseline = CLIMATOLOGY.get_baseline("precipitation", lat, lon, doy)
+    w_baseline = CLIMATOLOGY.get_baseline("wind_speed_10m", lat, lon, doy)
+
+    # --- Anomaly Z-scores ---
+    peak_temp = float(event.get("temperature_anomaly", 0.0)) + float(t_baseline.mean)
+    peak_precip = float(event.get("peak_rainfall", 0.0))
+    peak_wind = float(event.get("wind_anomaly", 0.0)) + float(w_baseline.mean)
+
+    t_anomaly = ANOMALY_ENGINE.compute_point_anomaly("temperature_2m", peak_temp, lat, lon, doy)
+    p_anomaly = ANOMALY_ENGINE.compute_point_anomaly("precipitation", peak_precip, lat, lon, doy)
+    w_anomaly = ANOMALY_ENGINE.compute_point_anomaly("wind_speed_10m", peak_wind, lat, lon, doy)
+
+    # --- EFI ---
+    synthetic_ensemble = np.maximum(
+        0.0, peak_precip + np.random.default_rng(seed=int(payload.event_id) if str(payload.event_id).isdigit() else 0).normal(0, 5.0, size=23)
+    )
+    efi_res = EFI_ENGINE.calculate_efi(
+        ensemble_forecast_values=synthetic_ensemble,
+        clim_mean=float(p_baseline.mean),
+        clim_std=float(p_baseline.std),
+        variable="precipitation",
+        valid_time="T+72h",
+        is_synthetic=True,
+    )
+
+    # --- Severity ---
+    z_max = max(t_anomaly.z_score, p_anomaly.z_score, w_anomaly.z_score)
+    severity_band, multi_score, exceedance_prob = SEVERITY_ENGINE.evaluate_severity(
+        physical_intensity=peak_precip if peak_precip > 5.0 else peak_temp,
+        anomaly_z_score=z_max,
+        efi_value=efi_res.efi,
+        lead_time_hours=int(event.get("forecast_end", 72)),
+    )
+
+    # --- Impact Zone ---
+    affected_area = float(event.get("affected_area_km2") or 15000.0)
+    impact_zone = IMPACT_ENGINE.generate_impact_zone(
+        event_id=f"ANLZ-{payload.event_id}",
+        centroid_lat=lat,
+        centroid_lon=lon,
+        physical_intensity=peak_precip if peak_precip > 5.0 else peak_temp,
+        anomaly_z_score=z_max,
+        affected_area_km2=affected_area,
+        lead_time_hours=int(event.get("forecast_end", 72)),
+        efi_value=efi_res.efi,
+        exceedance_prob=exceedance_prob,
+    )
+
+    # --- Subsystem Readiness ---
+    sys_status = ModelRegistry.get_system_status(active_mode)
+    subsystems = sys_status.get("subsystems", {})
+
+    return {
+        "event_id": event["id"],
+        "event_type": event.get("type", "Extreme Weather Anomaly"),
+        "data_mode": active_mode,
+        "analyzed_at": _now(),
+        "centroid": {"lat": lat, "lon": lon},
+        "day_of_year": doy,
+        "climatology": {
+            "temperature_mean": round(float(t_baseline.mean), 2),
+            "temperature_std": round(float(t_baseline.std), 2),
+            "precipitation_mean": round(float(p_baseline.mean), 2),
+            "precipitation_std": round(float(p_baseline.std), 2),
+            "wind_mean": round(float(w_baseline.mean), 2),
+            "wind_std": round(float(w_baseline.std), 2),
+            "method": "Day-of-Year Rolling Climatology (Location-Dependent)",
+        },
+        "anomaly_zscores": {
+            "temperature": round(t_anomaly.z_score, 3),
+            "precipitation": round(p_anomaly.z_score, 3),
+            "wind": round(w_anomaly.z_score, 3),
+            "composite_max": round(z_max, 3),
+        },
+        "efi": efi_res.to_dict(),
+        "severity": {
+            "band": severity_band,
+            "multi_factorial_score": round(multi_score, 1),
+            "exceedance_probability": round(exceedance_prob, 4),
+            "exceedance_pct": round(exceedance_prob * 100, 1),
+        },
+        "impact": impact_zone.to_dict(),
+        "subsystem_readiness": {
+            "climatological_baseline": subsystems.get("climatological_baseline", {}).get("status", "ACTIVE"),
+            "anomaly_engine": subsystems.get("anomaly_engine", {}).get("status", "ACTIVE"),
+            "efi_engine": subsystems.get("efi_engine", {}).get("status", "ACTIVE"),
+            "spatiotemporal_gnn": subsystems.get("spatiotemporal_gnn", {}).get("status", "PROTOTYPE"),
+            "conditional_diffusion": subsystems.get("conditional_diffusion", {}).get("status", "UNTRAINED_READY"),
+            "physics_constraints": subsystems.get("physics_constraints", {}).get("status", "VALIDATED"),
+        },
+        "scientific_summary": (
+            f"Event #{event['id']} ({event.get('type', 'N/A')}) analyzed at {lat} deg N, {lon} deg E. "
+            f"Composite anomaly Z-score: {z_max:.2f}. "
+            f"EFI: {efi_res.efi:+.3f} (ensemble tail exceedance). "
+            f"Multi-factorial severity score: {multi_score:.1f}/100 -> {severity_band}. "
+            f"Exceedance probability: {exceedance_prob*100:.1f}%. "
+            f"Impact zone area: {affected_area:.0f} km2."
+        ),
     }

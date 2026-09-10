@@ -370,6 +370,88 @@ async function handleGenerateAlert() {
     }
 }
 
+async function handleAnalyzeEvent() {
+    if (!selectedEvent) {
+        showToast("No event selected — please select an event first.", true);
+        return;
+    }
+
+    const btn = byId("analyzeBtn");
+    const prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "ANALYZING…";
+
+    try {
+        const res = await fetch(`${API_BASE}/api/analyze-event`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event_id: selectedEvent.id, mode: currentMode }),
+        });
+
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(errBody.detail || `HTTP ${res.status}`);
+        }
+
+        const d = await res.json();
+        const clim = d.climatology || {};
+        const zscores = d.anomaly_zscores || {};
+        const efi = d.efi || {};
+        const sev = d.severity || {};
+        const sub = d.subsystem_readiness || {};
+
+        // Panel title
+        byId("analyzePanelTitle").textContent =
+            `#${d.event_id} · ${d.event_type || "N/A"} (${d.data_mode || currentMode})`;
+
+        // Scientific summary
+        byId("analyzeSummary").textContent = d.scientific_summary || "Analysis complete.";
+
+        // Climatological baseline
+        byId("anlzTempClim").textContent =
+            `${formatNumber(clim.temperature_mean, " °C")} ± ${formatNumber(clim.temperature_std, " °C")}`;
+        byId("anlzPrecipClim").textContent =
+            `${formatNumber(clim.precipitation_mean, " mm")} ± ${formatNumber(clim.precipitation_std, " mm")}`;
+        byId("anlzWindClim").textContent =
+            `${formatNumber(clim.wind_mean, " km/h")} ± ${formatNumber(clim.wind_std, " km/h")}`;
+        byId("anlzClimMethod").textContent = clim.method || "Day-of-Year Rolling Climatology";
+
+        // Anomaly Z-scores
+        byId("anlzZTemp").textContent = formatNumber(zscores.temperature) + " σ";
+        byId("anlzZPrecip").textContent = formatNumber(zscores.precipitation) + " σ";
+        byId("anlzZWind").textContent = formatNumber(zscores.wind) + " σ";
+        byId("anlzZMax").textContent = formatNumber(zscores.composite_max) + " σ";
+
+        // EFI
+        const efiVal = Number.isFinite(Number(efi.efi)) ? `${Number(efi.efi) > 0 ? "+" : ""}${Number(efi.efi).toFixed(3)}` : "N/A";
+        byId("anlzEfi").textContent = efiVal;
+        byId("anlzEfiInterp").textContent = efi.interpretation || safeValue(efi.provenance);
+        byId("anlzEfiProv").textContent = efi.provenance || (efi.is_synthetic ? "Synthetic ensemble (clearly labeled)" : "Live EPS ensemble");
+
+        // Severity
+        byId("anlzSevBand").textContent = sev.band || "N/A";
+        byId("anlzSevScore").textContent = `${formatNumber(sev.multi_factorial_score)} / 100`;
+        byId("anlzSevExceed").textContent = `${formatNumber(sev.exceedance_pct, "%")}`;
+
+        // Subsystem readiness
+        byId("anlzSubClim").textContent = sub.climatological_baseline || "ACTIVE";
+        byId("anlzSubAnomaly").textContent = sub.anomaly_engine || "ACTIVE";
+        byId("anlzSubEfi").textContent = sub.efi_engine || "ACTIVE";
+        byId("anlzSubGnn").textContent = sub.spatiotemporal_gnn || "PROTOTYPE";
+        byId("anlzSubDiff").textContent = sub.conditional_diffusion || "UNTRAINED_READY";
+        byId("anlzSubPhys").textContent = sub.physics_constraints || "VALIDATED";
+
+        byId("analyzePanel").hidden = false;
+        byId("analyzePanel").scrollIntoView({ behavior: "smooth", block: "start" });
+        showToast(`Analysis complete for Event #${d.event_id}`);
+    } catch (e) {
+        showToast(`Unable to analyze event: ${e.message}`, true);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = prevText;
+    }
+}
+
 async function openDownscalingComparison() {
     try {
         const res = await fetch(`${API_BASE}/api/downscaling/compare`);
@@ -464,6 +546,9 @@ function initApp() {
 
     byId("downscalingBtn").addEventListener("click", openDownscalingComparison);
     byId("closeDownscalingBtn").addEventListener("click", () => { byId("downscalingModal").hidden = true; });
+
+    byId("analyzeBtn").addEventListener("click", handleAnalyzeEvent);
+    byId("closeAnalyzeBtn").addEventListener("click", () => { byId("analyzePanel").hidden = true; });
 
     byId("validationBtn").addEventListener("click", openValidationModal);
     byId("closeValidationBtn").addEventListener("click", () => { byId("validationModal").hidden = true; });
